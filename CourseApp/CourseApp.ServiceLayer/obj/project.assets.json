@@ -2843,24 +2843,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\berka\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Lenovo\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\CourseApp.BusinessLayer.csproj",
+      "projectUniqueName": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\CourseApp.BusinessLayer.csproj",
       "projectName": "CourseApp.BusinessLayer",
-      "projectPath": "D:\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\CourseApp.BusinessLayer.csproj",
-      "packagesPath": "C:\\Users\\berka\\.nuget\\packages\\",
-      "outputPath": "D:\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\obj\\",
+      "projectPath": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\CourseApp.BusinessLayer.csproj",
+      "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\berka\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -2868,14 +2863,15 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "D:\\HackathonV2Csharp\\CourseApp\\CourseApp.DataAccessLayer\\CourseApp.DataAccessLayer.csproj": {
-              "projectPath": "D:\\HackathonV2Csharp\\CourseApp\\CourseApp.DataAccessLayer\\CourseApp.DataAccessLayer.csproj"
+            "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.DataAccessLayer\\CourseApp.DataAccessLayer.csproj": {
+              "projectPath": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.DataAccessLayer\\CourseApp.DataAccessLayer.csproj"
             }
           }
         }
@@ -2889,8 +2885,7 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      },
-      "SdkAnalysisLevel": "9.0.300"
+      }
     },
     "frameworks": {
       "net8.0": {
@@ -2921,7 +2916,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.303/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

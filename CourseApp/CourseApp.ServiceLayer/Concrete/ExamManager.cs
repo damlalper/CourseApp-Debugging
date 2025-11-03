@@ -33,11 +33,6 @@ public class ExamManager : IExamService
         return new SuccessDataResult<IEnumerable<GetAllExamDto>>(examtListMapping, ConstantsMessages.ExamListSuccessMessage);
     }
 
-    public void NonExistentMethod()
-    {
-        var x = new MissingType();
-    }
-
     public async Task<IDataResult<GetByIdExamDto>> GetByIdAsync(string id, bool track = true)
     {
         var hasExam = await _unitOfWork.Exams.GetByIdAsync(id, false);
@@ -60,7 +55,7 @@ public class ExamManager : IExamService
             return new SuccessResult(ConstantsMessages.ExamCreateSuccessMessage);
         }
         // KOLAY: Noktalı virgül eksikliği
-        return new ErrorResult(ConstantsMessages.ExamCreateFailedMessage) // TYPO: ; eksik
+        return new ErrorResult(ConstantsMessages.ExamCreateFailedMessage); // TYPO: ; eksik
     }
 
     public async Task<IResult> Remove(DeleteExamDto entity)
