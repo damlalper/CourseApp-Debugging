@@ -53,12 +53,17 @@ public class CoursesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto createCourseDto)
     {
-        // ORTA: Null check eksik - createCourseDto null olabilir
-        var courseName = createCourseDto.CourseName; // Null reference riski
-        
-        // ORTA: Array index out of range - courseName boş/null ise
-        var firstChar = courseName[0]; // IndexOutOfRangeException riski
-        
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (createCourseDto == null || string.IsNullOrEmpty(createCourseDto.CourseName))
+        {
+            return BadRequest("Invalid course data");
+        }
+
+        var courseName = createCourseDto.CourseName; // Artık güvenli
+
+        // ORTA DÜZELTME: Length kontrolü eklendi
+        var firstChar = courseName[0]; // Artık güvenli
+
         var result = await _courseService.CreateAsync(createCourseDto);
         if (result.IsSuccess)
         {

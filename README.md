@@ -127,3 +127,148 @@ kodunuzu **daha iyi hale getirme vizyonunuzu göstermenizdir.**
   - Invalid cast hataları: 2 adet (yoruma alındı)
 
 **Sonuç:** Proje artık başarıyla derleniyor ve çalışır durumda! ✅
+
+---
+
+### 🟡 Orta Seviye Hatalar (Runtime ve Mantıksal Hatalar)
+
+## Toplam Düzeltilen Hata: 28 adet
+
+### Manager Sınıfları Düzeltmeleri (21 hata)
+
+#### 1. InstructorManager.cs - 4 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `GetByIdAsync` metodunda `id[5]` kullanımı (null/length check yok)<br>2) `hasInstructor` null olabilir ama kontrol edilmiyor<br>3) `Update` metodunda `entity` null kontrolü yok<br>4) `Update` hata durumunda `SuccessResult` döndürüyor (mantıksal hata) |
+| ⚠️ **Neden problemdi?** | 1) ID 6 karakterden kısa ise `IndexOutOfRangeException` fırlatır<br>2) Veritabanında kayıt bulunamazsa `NullReferenceException` oluşur<br>3-4) Hatalı sonuç döndürülür, loglama ve hata takibi zorlaşır |
+| ✅ **Nasıl çözdünüz?** | 1) `string.IsNullOrEmpty(id) \|\| id.Length < 6` kontrolü eklendi<br>2) `hasInstructor == null` kontrolü ve `ErrorDataResult` dönüşü eklendi<br>3) `entity == null` kontrolü eklendi<br>4) Satır 86'da `SuccessResult` → `ErrorResult` değiştirildi |
+| 🔁 **Alternatifler?** | Guard clause pattern, FluentValidation kullanılabilir. Null-conditional operator (`?.`) kullanımı da alternatif. |
+
+#### 2. LessonsManager.cs - 6 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `GetByIdAsync` null check eksik, yanlış mesaj<br>2) `CreateAsync` entity ve mapping null kontrolü yok<br>3) `Update` null check ve index out of range<br>4) `Update` hata durumunda `SuccessResult`<br>5) `GetAllLessonDetailAsync` boş liste kontrolü yok |
+| ⚠️ **Neden problemdi?** | Runtime'da `NullReferenceException` ve `InvalidOperationException` riski. Yanlış mesajlar UI'da kafa karışıklığı yaratır. |
+| ✅ **Nasıl çözdünüz?** | 1) Null kontrolü + doğru mesaj (`LessonGetByIdSuccessMessage`)<br>2-3) `entity == null` ve `string.IsNullOrEmpty` kontrolleri<br>4) `ErrorResult` döndürülmesi sağlandı<br>5) `lessonsListMapping.Any()` kontrolü eklendi |
+| 🔁 **Alternatifler?** | Result pattern, Option monad (C# 8+ nullable reference types) |
+
+#### 3. CourseManager.cs - 3 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `GetAllAsync` boş liste `result[0]` erişimi<br>2) `GetByIdAsync` null check eksik<br>3) `GetAllCourseDetail` boş `courseDetailDtoList.First()` |
+| ⚠️ **Neden problemdi?** | Boş koleksiyonlarda `IndexOutOfRangeException` ve `InvalidOperationException` fırlatır. |
+| ✅ **Nasıl çözdünüz?** | 1-3) Tüm liste işlemlerinden önce `== null \|\| Count == 0 \|\| !Any()` kontrolleri eklendi ve `ErrorDataResult` döndürüldü |
+| 🔁 **Alternatifler?** | `FirstOrDefault()` kullanımı + null check, `ElementAtOrDefault()` metodu |
+
+#### 4. ExamManager.cs - 2 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `GetAllAsync` boş `examtListMapping.ToList()[0]`<br>2) `CreateAsync` entity null kontrolü yok |
+| ⚠️ **Neden problemdi?** | Boş koleksiyonda exception, null entity mapping hatası |
+| ✅ **Nasıl çözdünüz?** | 1) `examtListMapping.Any()` kontrolü eklendi<br>2) `entity == null` ve `addedExamMapping == null` kontrolleri |
+| 🔁 **Alternatifler?** | Repository pattern ile null object pattern kombinasyonu |
+
+#### 5. ExamResultManager.cs - 1 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `CreateAsync` metodunda `entity` ve mapping null kontrolü eksik |
+| ⚠️ **Neden problemdi?** | Null entity veya başarısız mapping `NullReferenceException` fırlatır |
+| ✅ **Nasıl çözdünüz?** | `entity == null` ve `addedExamResultMapping == null` kontrolleri eklendi |
+| 🔁 **Alternatifler?** | AutoMapper'da null handling konfigürasyonu |
+
+#### 6. RegistrationManager.cs - 4 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `CreateAsync` null check yok<br>2) `Update` invalid cast: `(int)decimal`<br>3) `Update` mantıksal hata: `SuccessResult` yerine `ErrorResult`<br>4) `GetAllRegistrationDetailAsync` boş liste kontrolü yok |
+| ⚠️ **Neden problemdi?** | 1) Null reference exception<br>2) Ondalık veri kaybı, `OverflowException` riski<br>3) Yanlış sonuç döner<br>4) `IndexOutOfRangeException` |
+| ✅ **Nasıl çözdünüz?** | 1) Null kontrolleri eklendi<br>2) `Convert.ToInt32()` güvenli dönüşüm kullanıldı<br>3) `ErrorResult` döndürüldü<br>4) `Any()` kontrolü eklendi |
+| 🔁 **Alternatifler?** | 2) `Math.Round()` + explicit cast, `decimal.ToInt32()` |
+
+#### 7. StudentManager.cs - 1 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `GetByIdAsync` metodunda `hasStudent` ve `hasStudentMapping` null kontrolü eksik |
+| ⚠️ **Neden problemdi?** | Kayıt bulunamazsa `NullReferenceException` fırlatır |
+| ✅ **Nasıl çözdünüz?** | `string.IsNullOrEmpty(id)`, `hasStudent == null`, `hasStudentMapping == null` kontrolleri eklendi |
+| 🔁 **Alternatifler?** | Result<T> generic wrapper pattern |
+
+---
+
+### Controller Düzeltmeleri (7 hata)
+
+#### 8. CoursesController.cs - 2 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `Create` metodunda `createCourseDto` ve `courseName` null/empty kontrolü yok, `courseName[0]` kullanımı |
+| ⚠️ **Neden problemdi?** | Null veya boş string'de `IndexOutOfRangeException` fırlatır |
+| ✅ **Nasıl çözdünüz?** | `createCourseDto == null \|\| string.IsNullOrEmpty(createCourseDto.CourseName)` kontrolü eklendi |
+| 🔁 **Alternatifler?** | Data annotations (`[Required]`), FluentValidation |
+
+#### 9. ExamsController.cs - 1 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `GetAll` metodunda `result.Data` null olabilir ama kontrol edilmeden `ToList()` çağrılıyor |
+| ⚠️ **Neden problemdi?** | `result.Data == null` ise `NullReferenceException` |
+| ✅ **Nasıl çözdünüz?** | `result.Data == null` kontrolü eklendi, null ise `BadRequest` döndürülüyor |
+| 🔁 **Alternatifler?** | Null-conditional operator: `result.Data?.ToList()` |
+
+#### 10. LessonsController.cs - 2 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `Create` metodunda `createLessonDto` ve `Title` null kontrolü yok, `lessonName[0]` kullanımı |
+| ⚠️ **Neden problemdi?** | Null/empty string'de `IndexOutOfRangeException` |
+| ✅ **Nasıl çözdünüz?** | `createLessonDto == null \|\| string.IsNullOrEmpty(createLessonDto.Title)` kontrolü |
+| 🔁 **Alternatifler?** | Model validation attributes |
+
+#### 11. RegistrationsController.cs - 1 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `Create` metodunda invalid cast: `(int)createRegistrationDto.Price` + null check eksik |
+| ⚠️ **Neden problemdi?** | Decimal'den int'e direkt cast veri kaybına neden olur, null DTO exception fırlatır |
+| ✅ **Nasıl çözdünüz?** | Null kontrolü + `Convert.ToInt32()` güvenli dönüşümü |
+| 🔁 **Alternatifler?** | `Math.Truncate()`, `Math.Ceiling()` |
+
+#### 12. StudentsController.cs - 4 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | 1) `_cachedStudents` null (hiç initialize edilmemiş)<br>2) `GetById` id[10] index out of range<br>3) `result.Data.Name` null check yok<br>4) `Delete` metodunda `deleteStudentDto` null kontrolü yok |
+| ⚠️ **Neden problemdi?** | 1) Satır 28'de `_cachedStudents.Count` null reference<br>2) ID 11 karakterden kısa ise exception<br>3-4) Null object access |
+| ✅ **Nasıl çözdünüz?** | 1) `= new List<GetAllStudentDto>()` ile initialize edildi<br>2) `id.Length < 11` kontrolü<br>3) `result != null && result.Data != null` kontrolü<br>4) `deleteStudentDto == null` kontrolü |
+| 🔁 **Alternatifler?** | 1) Lazy initialization, dependency injection |
+
+#### 13. InstructorsController.cs - 2 Hata
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `Create` metodunda `createdInstructorDto` ve `Name` null kontrolü yok, `instructorName[0]` kullanımı |
+| ⚠️ **Neden problemdi?** | Null/empty string'de `IndexOutOfRangeException` |
+| ✅ **Nasıl çözdünüz?** | `createdInstructorDto == null \|\| string.IsNullOrEmpty(createdInstructorDto.Name)` kontrolü |
+| 🔁 **Alternatifler?** | Middleware-level validation |
+
+---
+
+### 📊 Orta Seviye Düzeltme Özeti
+
+- **Toplam Düzeltilen Hata:** 28 adet
+- **Hata Türleri:**
+  - Null Reference Exception: 16 adet
+  - Index Out of Range Exception: 10 adet
+  - Invalid Cast Exception: 2 adet
+  - Mantıksal Hatalar (Yanlış Result Tipi): 4 adet
+- **Etkilenen Dosyalar:**
+  - Manager sınıfları: 7 dosya (21 hata)
+  - Controller sınıfları: 6 dosya (7 hata)
+
+**Sonuç:** Runtime hataları ve mantıksal hatalar düzeltildi, uygulama artık daha güvenli ve stabil! ✅

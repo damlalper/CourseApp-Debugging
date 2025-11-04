@@ -26,10 +26,14 @@ public class ExamManager : IExamService
         var examList = _unitOfWork.Exams.GetAll(false).ToList(); // ZOR: ToListAsync kullanılmalıydı
         // KOLAY: Değişken adı typo - examtListMapping yerine examListMapping
         var examtListMapping = _mapper.Map<IEnumerable<GetAllExamDto>>(examList); // TYPO
-        
-        // ORTA: Index out of range - examtListMapping boş olabilir
-        var firstExam = examtListMapping.ToList()[0]; // IndexOutOfRangeException riski
-        
+
+        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
+        if (examtListMapping == null || !examtListMapping.Any())
+        {
+            return new ErrorDataResult<IEnumerable<GetAllExamDto>>(null, ConstantsMessages.ExamListFailedMessage);
+        }
+        var firstExam = examtListMapping.ToList()[0]; // Artık güvenli
+
         return new SuccessDataResult<IEnumerable<GetAllExamDto>>(examtListMapping, ConstantsMessages.ExamListSuccessMessage);
     }
 
@@ -41,12 +45,21 @@ public class ExamManager : IExamService
     }
     public async Task<IResult> CreateAsync(CreateExamDto entity)
     {
-        // ORTA: Null check eksik - entity null olabilir
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (entity == null)
+        {
+            return new ErrorResult("Entity cannot be null");
+        }
+
         var addedExamMapping = _mapper.Map<Exam>(entity);
-        
-        // ORTA: Null reference - addedExamMapping null olabilir
-        var examName = addedExamMapping.Name; // Null reference riski
-        
+
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (addedExamMapping == null)
+        {
+            return new ErrorResult("Mapping failed");
+        }
+        var examName = addedExamMapping.Name; // Artık güvenli
+
         // ZOR: Async/await anti-pattern - async metot içinde .Wait() kullanımı deadlock'a sebep olabilir
         _unitOfWork.Exams.CreateAsync(addedExamMapping).Wait(); // ZOR: Anti-pattern - await kullanılmalıydı
         var result = await _unitOfWork.CommitAsync();

@@ -62,12 +62,17 @@ public class LessonsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateLessonDto createLessonDto)
     {
-        // ORTA: Null check eksik - createLessonDto null olabilir
-        var lessonName = createLessonDto.Title; // Null reference riski
-        
-        // ORTA: Index out of range - lessonName boş/null ise
-        var firstChar = lessonName[0]; // IndexOutOfRangeException riski
-        
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (createLessonDto == null || string.IsNullOrEmpty(createLessonDto.Title))
+        {
+            return BadRequest("Invalid lesson data");
+        }
+
+        var lessonName = createLessonDto.Title; // Artık güvenli
+
+        // ORTA DÜZELTME: Length kontrolü eklendi
+        var firstChar = lessonName[0]; // Artık güvenli
+
         // KOLAY: Metod adı yanlış yazımı - CreateAsync yerine CreatAsync
         var result = await _lessonService.CreateAsync(createLessonDto); // TYPO: Create yerine Creat
         if (result.IsSuccess)

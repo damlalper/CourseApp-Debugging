@@ -43,11 +43,20 @@ public class ExamResultManager : IExamResultService
 
     public async Task<IResult> CreateAsync(CreateExamResultDto entity)
     {
-        // ORTA: Null check eksik - entity null olabilir
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (entity == null)
+        {
+            return new ErrorResult("Entity cannot be null");
+        }
+
         var addedExamResultMapping = _mapper.Map<ExamResult>(entity);
-        // ORTA: Null reference - addedExamResultMapping null olabilir
-        var score = addedExamResultMapping.Grade; // Null reference riski
-        
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (addedExamResultMapping == null)
+        {
+            return new ErrorResult("Mapping failed");
+        }
+        var score = addedExamResultMapping.Grade; // Artık güvenli
+
         await _unitOfWork.ExamResults.CreateAsync(addedExamResultMapping);
         // ZOR: Async/await anti-pattern - GetAwaiter().GetResult() deadlock'a sebep olabilir
         var result = _unitOfWork.CommitAsync().GetAwaiter().GetResult(); // ZOR: Anti-pattern

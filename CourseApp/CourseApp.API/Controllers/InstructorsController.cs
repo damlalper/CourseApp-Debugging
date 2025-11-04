@@ -40,15 +40,20 @@ public class InstructorsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatedInstructorDto createdInstructorDto)
     {
-        // ORTA: Null check eksik - createdInstructorDto null olabilir
-        var instructorName = createdInstructorDto.Name; // Null reference riski
-        
-        // ORTA: Index out of range - instructorName boş/null ise
-        var firstChar = instructorName[0]; // IndexOutOfRangeException riski
-        
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (createdInstructorDto == null || string.IsNullOrEmpty(createdInstructorDto.Name))
+        {
+            return BadRequest("Invalid instructor data");
+        }
+
+        var instructorName = createdInstructorDto.Name; // Artık güvenli
+
+        // ORTA DÜZELTME: Length kontrolü eklendi
+        var firstChar = instructorName[0]; // Artık güvenli
+
         // ORTA: Tip dönüşüm hatası - string'i int'e direkt cast
         // var invalidAge = (int)instructorName; // ORTA: InvalidCastException
-        
+
         var result = await _instructorService.CreateAsync(createdInstructorDto);
         if (result.IsSuccess)
         {

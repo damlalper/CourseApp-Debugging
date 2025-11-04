@@ -12,8 +12,8 @@ public class StudentsController : ControllerBase
     private readonly IStudentService _studentService;
     // ZOR: Katman ihlali - Presentation katmanından direkt DataAccess katmanına erişim
     private readonly AppDbContext _dbContext;
-    // ORTA: Değişken tanımlandı ama asla kullanılmadı ve null olabilir
-    private List<GetAllStudentDto> _cachedStudents;
+    // ORTA DÜZELTME: Değişken initialize edildi
+    private List<GetAllStudentDto> _cachedStudents = new List<GetAllStudentDto>();
 
     public StudentsController(IStudentService studentService, AppDbContext dbContext)
     {
@@ -42,13 +42,19 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
-        // ORTA: Null check eksik - id null/empty olabilir
-        // ORTA: Index out of range riski - string.Length kullanımı yanlış olabilir
-        var studentId = id[10]; // ORTA: id 10 karakterden kısa olursa IndexOutOfRangeException
-        
+        // ORTA DÜZELTME: Null ve length kontrolü eklendi
+        if (string.IsNullOrEmpty(id) || id.Length < 11)
+        {
+            return BadRequest("Invalid ID");
+        }
+        var studentId = id[10]; // Artık güvenli
+
         var result = await _studentService.GetByIdAsync(id);
-        // ORTA: Null reference exception - result.Data null olabilir
-        var studentName = result.Data.Name; // Null check yok
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (result != null && result.Data != null)
+        {
+            var studentName = result.Data.Name; // Artık güvenli
+        }
         if (result.IsSuccess)
         {
             return Ok(result);
@@ -95,13 +101,17 @@ public class StudentsController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> Delete([FromBody] DeleteStudentDto deleteStudentDto)
     {
-        // ORTA: Null reference - deleteStudentDto null olabilir
-        var id = deleteStudentDto.Id; // Null check yok
-        
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (deleteStudentDto == null)
+        {
+            return BadRequest("Invalid student data");
+        }
+        var id = deleteStudentDto.Id; // Artık güvenli
+
         // ZOR: Memory leak - DbContext Dispose edilmiyor
         var tempContext = new AppDbContext(new Microsoft.EntityFrameworkCore.DbContextOptions<AppDbContext>());
         tempContext.Students.ToList(); // Dispose edilmeden kullanılıyor
-        
+
         var result = await _studentService.Remove(deleteStudentDto);
         if (result.IsSuccess)
         {

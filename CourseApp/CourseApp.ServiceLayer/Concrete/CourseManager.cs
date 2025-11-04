@@ -38,22 +38,35 @@ public class CourseManager : ICourseService
             StartDate = course.StartDate
         }).ToList();
 
-        // ORTA: Index out of range - result boş olabilir
-        var firstCourse = result[0]; // IndexOutOfRangeException riski
+        // ORTA DÜZELTME: Boş liste kontrolü eklendi
+        if (result == null || result.Count == 0)
+        {
+            return new ErrorDataResult<IEnumerable<GetAllCourseDto>>(null, ConstantsMessages.CourseListFailedMessage);
+        }
+        var firstCourse = result[0]; // Artık güvenli
 
         return new SuccessDataResult<IEnumerable<GetAllCourseDto>>(result, ConstantsMessages.CourseListSuccessMessage);
     }
 
     public async Task<IDataResult<GetByIdCourseDto>> GetByIdAsync(string id, bool track = true)
     {
-        // ORTA: Null check eksik - id null/empty olabilir
-        // ORTA: Null reference exception - hasCourse null olabilir ama kontrol edilmiyor
+        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
+        if (string.IsNullOrEmpty(id))
+        {
+            return new ErrorDataResult<GetByIdCourseDto>(null, "Invalid ID");
+        }
+
         var hasCourse = await _unitOfWork.Courses.GetByIdAsync(id, track);
 
-        // ORTA: Null reference - hasCourse null ise NullReferenceException
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (hasCourse == null)
+        {
+            return new ErrorDataResult<GetByIdCourseDto>(null, ConstantsMessages.CourseGetByIdFailedMessage);
+        }
+
         var course = new GetByIdCourseDto
         {
-            CourseName = hasCourse.CourseName, // Null reference riski
+            CourseName = hasCourse.CourseName, // Artık güvenli
             CreatedDate = hasCourse.CreatedDate,
             EndDate = hasCourse.EndDate,
             InstructorID = hasCourse.InstructorID,
@@ -145,8 +158,12 @@ public class CourseManager : ICourseService
             IsActive = x.IsActive,
         });
 
-        // ORTA: Null reference - courseDetailDtoList null olabilir
-        var firstDetail = courseDetailDtoList.First(); // Null/Empty durumunda exception
+        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
+        if (courseDetailDtoList == null || !courseDetailDtoList.Any())
+        {
+            return new ErrorDataResult<IEnumerable<GetAllCourseDetailDto>>(null, ConstantsMessages.CourseListFailedMessage);
+        }
+        var firstDetail = courseDetailDtoList.First(); // Artık güvenli
 
         return new SuccessDataResult<IEnumerable<GetAllCourseDetailDto>>(courseDetailDtoList, ConstantsMessages.CourseDetailsFetchedSuccessfully);
     }

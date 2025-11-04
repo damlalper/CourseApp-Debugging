@@ -22,8 +22,12 @@ public class ExamsController : ControllerBase
         var result = await _examService.GetAllAsync();
         if (result.IsSuccess)
         {
-            // ORTA: Null reference - result.Data null olabilir
-            var exams = result.Data.ToList();
+            // ORTA DÜZELTME: Null kontrolü eklendi
+            if (result.Data == null)
+            {
+                return BadRequest("No data found");
+            }
+            var exams = result.Data.ToList(); // Artık güvenli
             // ZOR: N+1 - Her exam için ayrı sorgu (örnek - gerçek implementasyon service layer'da olabilir)
             foreach (var exam in exams)
             {

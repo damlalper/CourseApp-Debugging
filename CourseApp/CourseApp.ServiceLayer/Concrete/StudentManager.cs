@@ -33,12 +33,26 @@ public class StudentManager : IStudentService
 
     public async Task<IDataResult<GetByIdStudentDto>> GetByIdAsync(string id, bool track = true)
     {
-        // ORTA: Null check eksik - id null/empty olabilir
-        // ORTA: Null reference exception - hasStudent null olabilir ama kontrol edilmiyor
+        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
+        if (string.IsNullOrEmpty(id))
+        {
+            return new ErrorDataResult<GetByIdStudentDto>(null, "Invalid ID");
+        }
+
         var hasStudent = await _unitOfWork.Students.GetByIdAsync(id, false);
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (hasStudent == null)
+        {
+            return new ErrorDataResult<GetByIdStudentDto>(null, ConstantsMessages.StudentGetByIdFailedMessage);
+        }
+
         var hasStudentMapping = _mapper.Map<GetByIdStudentDto>(hasStudent);
-        // ORTA: Null reference - hasStudentMapping null olabilir ama kullanılıyor
-        var name = hasStudentMapping.Name; // Null reference riski
+        // ORTA DÜZELTME: Null kontrolü eklendi
+        if (hasStudentMapping == null)
+        {
+            return new ErrorDataResult<GetByIdStudentDto>(null, "Mapping failed");
+        }
+        var name = hasStudentMapping.Name; // Artık güvenli
         return new SuccessDataResult<GetByIdStudentDto>(hasStudentMapping, ConstantsMessages.StudentGetByIdSuccessMessage);
     }
 
