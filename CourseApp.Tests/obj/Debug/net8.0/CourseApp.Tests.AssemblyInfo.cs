@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("CourseApp.BusinessLayer")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("CourseApp.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1095c17e03a26f9af869669f0bae41e071db09da")]
-[assembly: System.Reflection.AssemblyProductAttribute("CourseApp.BusinessLayer")]
-[assembly: System.Reflection.AssemblyTitleAttribute("CourseApp.BusinessLayer")]
+[assembly: System.Reflection.AssemblyProductAttribute("CourseApp.Tests")]
+[assembly: System.Reflection.AssemblyTitleAttribute("CourseApp.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 
 // MSBuild WriteCodeFragment sınıfı tarafından oluşturuldu.
