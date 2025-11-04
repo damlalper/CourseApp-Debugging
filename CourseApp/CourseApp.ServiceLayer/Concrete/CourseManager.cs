@@ -7,6 +7,7 @@ using CourseApp.ServiceLayer.Utilities.Result;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
+using CourseApp.EntityLayer.Dto.LessonDto;
 
 namespace CourseApp.ServiceLayer.Concrete;
 

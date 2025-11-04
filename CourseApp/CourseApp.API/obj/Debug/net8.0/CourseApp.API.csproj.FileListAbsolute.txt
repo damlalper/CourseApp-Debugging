@@ -92,3 +92,4 @@ C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.API\obj
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.API\obj\Debug\net8.0\CourseApp.API.pdb
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.API\obj\Debug\net8.0\CourseApp.API.genruntimeconfig.cache
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.API\obj\Debug\net8.0\ref\CourseApp.API.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

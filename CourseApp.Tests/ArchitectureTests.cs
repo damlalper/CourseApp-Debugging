@@ -1,4 +1,5 @@
 
+using AutoMapper;
 using CourseApp.DataAccessLayer.UnitOfWork;
 using CourseApp.EntityLayer.Dto.StudentDto;
 using CourseApp.ServiceLayer.Concrete;
@@ -22,7 +23,8 @@ public class ArchitectureTests
 
         // ARRANGE
         var mockUnitOfWork = new Mock<IUnitOfWork>();
-        var studentManager = new StudentManager(mockUnitOfWork.Object); // Assuming constructor takes IUnitOfWork
+        var mockMapper = new Mock<IMapper>();
+        var studentManager = new StudentManager(mockUnitOfWork.Object, mockMapper.Object);
         
         var newStudentDto = new CreateStudentDto 
         { 

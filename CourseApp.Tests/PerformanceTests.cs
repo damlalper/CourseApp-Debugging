@@ -1,9 +1,15 @@
 
 using System.Net;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 using CourseApp.DataAccessLayer.Concrete;
 using CourseApp.EntityLayer.Entity;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CourseApp.Tests;
@@ -15,7 +21,33 @@ public class PerformanceTests : IClassFixture<WebApplicationFactory<Program>>
 
     public PerformanceTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        // Configure factory to use InMemory database for testing
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                // Remove existing DbContext registration
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null)
+                {
+                    services.Remove(descriptor);
+                }
+
+                // Add InMemory database for testing
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    options.UseInMemoryDatabase("TestDatabase");
+                });
+
+                // Disable authentication for performance tests
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Test";
+                    options.DefaultChallengeScheme = "Test";
+                }).AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
+            });
+        });
     }
 
     [Fact]
@@ -27,7 +59,7 @@ public class PerformanceTests : IClassFixture<WebApplicationFactory<Program>>
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            // Ensure the database is clean and created
+            // Ensure the database is clean
             await dbContext.Database.EnsureDeletedAsync();
             await dbContext.Database.EnsureCreatedAsync();
 
@@ -69,5 +101,27 @@ public class PerformanceTests : IClassFixture<WebApplicationFactory<Program>>
         // AFTER THE FIX:
         // The logs should show only 1 single, efficient query that uses JOINs to fetch
         // all courses and their related instructors/lessons at once.
+    }
+}
+
+// Test authentication handler that always succeeds
+public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+{
+    public TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder)
+        : base(options, logger, encoder)
+    {
+    }
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
+        var identity = new ClaimsIdentity(claims, "Test");
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, "Test");
+
+        var result = AuthenticateResult.Success(ticket);
+
+        return Task.FromResult(result);
     }
 }

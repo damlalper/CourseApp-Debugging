@@ -1,0 +1,6 @@
+{
+  "CourseApp.API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.API",
+  "CourseApp.BusinessLayer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.ServiceLayer",
+  "CourseApp.DataAccessLayer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\CourseApp.DataAccessLayer",
+  "CourseApp.EntityLayer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Lenovo\\Desktop\\hackathons\\HackathonV2Csharp\\CourseApp\\EntityLayer"
+}
