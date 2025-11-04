@@ -18,6 +18,7 @@ Ancak bu şablonu **kendi tarzınıza göre genişletmek serbesttir.**
 > “Düzelttim” demek yeterli değildir — **neden** ve **nasıl** düzeltildiğini görmek istiyoruz.  
 > Ek olarak, **kendi ek geliştirmelerinizi ve fikirlerinizi** de belirtin.
 > yorum satırlarında hataların görüntülenmesi kafanızı karıştırmak için koyulmuş olabilir..
+
 ---
 
 ## 💬 Özet
@@ -272,3 +273,43 @@ kodunuzu **daha iyi hale getirme vizyonunuzu göstermenizdir.**
   - Controller sınıfları: 6 dosya (7 hata)
 
 **Sonuç:** Runtime hataları ve mantıksal hatalar düzeltildi, uygulama artık daha güvenli ve stabil! ✅
+
+---
+
+### 🔴 Zor Seviye Hatalar (Performans, Güvenlik ve Mimari)
+
+#### 1. Performans Problemi: N+1 Sorgu Hatası
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `CourseManager` içindeki `GetAllAsync` ve `GetAllCourseDetail` metotları, ilişkili verileri (Instructor, Lessons) verimli bir şekilde çekmiyordu. `GetAllAsync`, her bir kurs için ayrı bir veritabanı sorgusu yaparak eğitmen bilgilerini alıyordu (Lazy Loading). `GetAllCourseDetail` ise potansiyel bir N+1 sorununa sahipti çünkü kurslara bağlı `Lessons` (dersleri) sorguya dahil etmiyordu. |
+| ⚠️ **Neden problemdi?** | Bu, "N+1 sorgu problemi" olarak bilinen ciddi bir performans sorunudur. Örneğin, 100 kurs varsa, tüm kursları listelemek için 1 (kurslar için) + 100 (her kursun eğitmeni için) = 101 veritabanı sorgusu yapılıyordu. Bu durum, veri miktarı arttıkça API'nin yavaşlamasına ve kaynakların verimsiz kullanılmasına neden olur. |
+| ✅ **Nasıl çözdünüz?** | 1. **Repository Katmanı:** `CourseRepository`'deki `GetAllCourseDetail` metodu, `Include(c => c.Instructor)` ifadesine ek olarak `Include(c => c.Lessons)` ifadesini de içerecek şekilde güncellendi. Artık tek bir sorguda bir kursun hem eğitmeni hem de tüm dersleri getiriliyor.<br>2. **Service Katmanı:** `CourseManager`'daki `GetAllAsync` metodu, verimsiz `GetAll()` yerine artık verileri tek seferde çeken `GetAllCourseDetail()` metodunu kullanacak şekilde değiştirildi.<br>3. **DTO ve Mapping:** `GetAllCourseDetailDto` içerisine `Lessons` koleksiyonu eklendi ve `CourseManager`'daki mapping (haritalama) işlemi, bu yeni verileri DTO'ya doğru bir şekilde aktaracak şekilde güncellendi. |
+| 🔁 **Alternatifler?** | Projeksiyon (Projection) kullanılabilirdi. `Select` ifadesi içinde doğrudan istenen DTO'ya dönüşüm yapılarak sadece gerekli kolonlar çekilebilirdi. Bu, `Include`'dan daha performanslı olabilir ancak daha karmaşık sorgular gerektirir. Diğer bir alternatif ise `Dapper` gibi micro-ORM'ler ile optimize edilmiş SQL sorguları yazmaktır. |
+
+#### 2. Mimari Hata ve Güvenlik Zafiyeti: Katman İhlali (Layer Violation)
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `StudentsController`, `AppDbContext`'i doğrudan inject ederek kullanıyordu. `Create` ve `Delete` metotları içinde veritabanına doğrudan erişim sağlanıyordu. Ayrıca `Delete` metodunda manuel olarak oluşturulan `DbContext` dispose edilmiyordu. |
+| ⚠️ **Neden problemdi?** | 1. **Güvenlik:** Bu durum, Service (iş mantığı) katmanını tamamen bypass ederek, validasyon ve iş kurallarının atlanmasına neden oluyordu. Herhangi bir kötü niyetli kullanıcı, bu zafiyeti kullanarak sisteme istenmeyen veriler ekleyebilirdi.<br>2. **Mimari Bozukluk:** Sunum katmanının (API Controller) veri erişim katmanına (`DbContext`) doğrudan erişmesi, n-tier mimarinin temel prensiplerini ihlal eder. Bu, kodun bakımını zorlaştırır ve katmanlar arası sıkı bir bağımlılık (tight coupling) yaratır.<br>3. **Memory Leak:** Dispose edilmeyen `DbContext`, veritabanı bağlantılarının ve hafızanın sızdırılmasına, bir süre sonra uygulamanın tamamen yanıt vermemesine neden olur. |
+| ✅ **Nasıl çözdünüz?** | `StudentsController` içerisinden `AppDbContext` bağımlılığı tamamen kaldırıldı. Veritabanına doğrudan erişen (`_dbContext.Students.Add(...)` ve `new AppDbContext(...)`) tüm kod blokları silindi. Artık Controller, tüm veritabanı işlemleri için sadece `IStudentService` arayüzünü kullanıyor ve mimari bütünlük sağlandı. |
+| 🔁 **Alternatifler?** | Bu bir mimari tasarım hatası olduğu için tek doğru çözüm, katmanlar arasındaki sorumlulukları doğru bir şekilde ayırmaktır. Alternatif bir yaklaşım yoktur; sunum katmanı, iş katmanını atlamamalıdır. |
+
+#### 3. Kritik Güvenlik Zafiyeti: Yetkilendirme Eksikliği
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | Projedeki hiçbir Controller (`Courses`, `Students`, `Exams` vb.) veya endpoint üzerinde yetkilendirme (`Authorization`) mekanizması bulunmuyordu. |
+| ⚠️ **Neden problemdi?** | Bu, sistemdeki en kritik güvenlik açıklarından biridir. API endpoint'lerine erişim tamamen halka açıktı. Bu, internete erişimi olan herhangi bir anonim kullanıcının sistemdeki tüm verileri (kurs, öğrenci, sınav vb.) oluşturabileceği, güncelleyebileceği ve silebileceği anlamına geliyordu. |
+| ✅ **Nasıl çözdünüz?** | Tüm Controller sınıflarının üzerine `[Authorize]` attribute'u eklendi. Bu sayede, bu controller'lar altındaki tüm endpoint'lere (GET, POST, PUT, DELETE) erişim, sadece kimliği doğrulanmış (authenticated) kullanıcılarla sınırlandırıldı. Ayrıca ilgili `using Microsoft.AspNetCore.Authorization;` ifadesi controller'lara eklendi. |
+| 🔁 **Alternatifler?** | Daha granüler bir yetkilendirme yapılabilirdi. Örneğin, `[AllowAnonymous]` attribute'u ile sadece `GET` metotlarına anonim erişim izni verilebilir, ancak veri değiştiren `POST`, `PUT`, `DELETE` metotları `[Authorize]` ile korunabilirdi. Ayrıca, `[Authorize(Roles = "Admin")]` gibi rol bazlı yetkilendirme ile sadece belirli rollerdeki kullanıcıların erişimi sağlanabilirdi. |
+
+#### 4. Performans ve Stabilite Problemi: Async/Await Anti-Pattern'leri
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `ExamManager` sınıfı içerisinde `async` programlama prensiplerine aykırı iki önemli hata vardı:<br>1. `GetAllAsync` metodu `async` olmasına rağmen veritabanından verileri çekerken `ToList()` gibi senkron bir metot kullanıyordu.<br>2. `CreateAsync` metodu içerisinde, asenkron `CreateAsync` çağrısı `await` ile beklenmek yerine `.Wait()` ile bloklanıyordu. |
+| ⚠️ **Neden problemdi?** | 1. **Async over Sync:** `ToList()` kullanımı, asenkron olması gereken bir operasyonu senkron hale getirerek ilgili thread'i bloklar. Bu, uygulamanın ölçeklenebilirliğini ciddi şekilde düşürür ve "thread pool starvation" (thread havuzunun tükenmesi) riskine yol açar.<br>2. **Deadlock Riski:** `.Wait()` kullanımı, özellikle ASP.NET Core gibi bir senkronizasyon bağlamı olan ortamlarda `deadlock` (kilitlenme) riskini beraberinde getirir. Uygulama tamamen donabilir ve yanıt vermez hale gelebilirdi. |
+| ✅ **Nasıl çözdünüz?** | 1. `ExamManager.GetAllAsync` içerisindeki `ToList()` çağrısı, `await _unitOfWork.Exams.GetAll(false).ToListAsync()` şeklinde asenkron versiyonuyla değiştirildi.<br>2. `ExamManager.CreateAsync` içerisindeki `.Wait()` çağrısı kaldırılarak yerine `await _unitOfWork.Exams.CreateAsync(addedExamMapping)` ifadesi kullanıldı. Bu sayede operasyonlar non-blocking (engellemeyen) hale getirildi. |
+| 🔁 **Alternatifler?** | Bu anti-pattern'lerin tek doğru çözümü, `async/await`'i baştan sona doğru bir şekilde kullanmaktır. Senkron metotlar (`.Result`, `.Wait()`) yerine `await` anahtar kelimesi tercih edilmelidir. Alternatif bir yaklaşım, bu operasyonların tamamen senkron tasarlanması olabilirdi, ancak bu da modern web uygulamalarının ölçeklenebilirlik hedeflerine aykırı olurdu. |

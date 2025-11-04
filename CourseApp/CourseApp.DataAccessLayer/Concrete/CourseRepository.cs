@@ -19,7 +19,7 @@ public class CourseRepository : GenericRepository<Course>, ICourseRepository
         {
             query = query.AsNoTracking();
         }
-        return query.Include(c => c.Instructor);
+        return query.Include(c => c.Instructor).Include(c => c.Lessons);
     }
 
 }

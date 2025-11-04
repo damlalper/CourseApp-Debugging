@@ -1,11 +1,13 @@
 using CourseApp.EntityLayer.Dto.InstructorDto;
 using CourseApp.ServiceLayer.Abstract;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseApp.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class InstructorsController : ControllerBase
 {
     private readonly IInstructorService _instructorService;

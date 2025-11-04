@@ -1,11 +1,13 @@
 using CourseApp.EntityLayer.Dto.ExamDto;
 using CourseApp.ServiceLayer.Abstract;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseApp.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExamsController : ControllerBase
 {
     private readonly IExamService _examService;
@@ -28,12 +30,6 @@ public class ExamsController : ControllerBase
                 return BadRequest("No data found");
             }
             var exams = result.Data.ToList(); // Artık güvenli
-            // ZOR: N+1 - Her exam için ayrı sorgu (örnek - gerçek implementasyon service layer'da olabilir)
-            foreach (var exam in exams)
-            {
-                // Her exam için ayrı sorgu atılıyor - Include kullanılmamalıydı
-                var details = await _examService.GetByIdAsync(exam.Id);
-            }
             return Ok(result);
         }
         return BadRequest(result);

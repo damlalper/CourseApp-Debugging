@@ -1,11 +1,13 @@
 using CourseApp.EntityLayer.Dto.ExamResultDto;
 using CourseApp.ServiceLayer.Abstract;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseApp.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExamResultsController : ControllerBase
 {
     private readonly IExamResultService _examResultService;
@@ -25,11 +27,6 @@ public class ExamResultsController : ControllerBase
         {
             // ZOR: N+1 - Her examResult için detay çekiliyor
             var examResults = result.Data.ToList();
-            foreach (var examResult in examResults)
-            {
-                // Her examResult için ayrı sorgu
-                var detail = await _examResultService.GetByIdExamResultDetailAsync(examResult.Id);
-            }
             return Ok(result);
         }
         // KOLAY: Metod adı yanlış yazımı - BadRequest yerine BadReqest

@@ -1,4 +1,6 @@
-﻿namespace CourseApp.EntityLayer.Dto.CourseDto;
+﻿using CourseApp.EntityLayer.Dto.LessonDto;
+
+namespace CourseApp.EntityLayer.Dto.CourseDto;
 
 public class GetAllCourseDetailDto
 {
@@ -10,4 +12,5 @@ public class GetAllCourseDetailDto
     public DateTime EndDate { get; set; }
     public string InstructorID { get; set; } = null!;
     public string InstructorName { get; set; } = null!;
+    public ICollection<GetAllLessonDto> Lessons { get; set; } = [];
 }

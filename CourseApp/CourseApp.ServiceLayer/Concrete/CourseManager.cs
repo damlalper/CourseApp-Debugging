@@ -22,7 +22,7 @@ public class CourseManager : ICourseService
     public async Task<IDataResult<IEnumerable<GetAllCourseDto>>> GetAllAsync(bool track = true)
     {
         // ZOR: N+1 Problemi - Her course için Instructor ayrı sorgu ile çekiliyor
-        var courseList = await _unitOfWork.Courses.GetAll(false).ToListAsync();
+        var courseList = await _unitOfWork.Courses.GetAllCourseDetail(false).ToListAsync();
         
         // ZOR: N+1 - Include/ThenInclude kullanılmamış, lazy loading aktif
         var result = courseList.Select(course => new GetAllCourseDto
@@ -145,7 +145,7 @@ public class CourseManager : ICourseService
         var courseListDetailList = await _unitOfWork.Courses.GetAllCourseDetail(false).ToListAsync();
         
         // ZOR: N+1 - Her course için Instructor ayrı sorgu ile çekiliyor (x.Instructor?.Name)
-        var courseDetailDtoList  = courseListDetailList.Select(x => new GetAllCourseDetailDto // KOLAY: Yanlış tip - GetAllCourseDetailDto olmalıydı
+        var courseDetailDtoList  = courseListDetailList.Select(x => new GetAllCourseDetailDto
         {
             CourseName = x.CourseName,
             StartDate = x.StartDate,
@@ -153,9 +153,18 @@ public class CourseManager : ICourseService
             CreatedDate = x.CreatedDate,
             Id = x.ID,
             InstructorID = x.InstructorID,
-            // ZOR: N+1 - Her course için ayrı Instructor sorgusu
-            InstructorName = x.Instructor?.Name ?? "", // Lazy loading aktif - her iterasyonda DB sorgusu
+            InstructorName = x.Instructor?.Name ?? "",
             IsActive = x.IsActive,
+            Lessons = x.Lessons.Select(l => new GetAllLessonDto
+            {
+                Id = l.ID,
+                Title = l.Title,
+                Date = l.Date,
+                Duration = l.Duration,
+                Content = l.Content,
+                CourseID = l.CourseID,
+                Time = l.Time
+            }).ToList()
         });
 
         // ORTA DÜZELTME: Null ve empty kontrolü eklendi

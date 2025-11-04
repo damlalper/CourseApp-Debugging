@@ -1,24 +1,22 @@
 using CourseApp.EntityLayer.Dto.StudentDto;
-using CourseApp.DataAccessLayer.Concrete;
 using CourseApp.ServiceLayer.Abstract;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseApp.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService _studentService;
-    // ZOR: Katman ihlali - Presentation katmanından direkt DataAccess katmanına erişim
-    private readonly AppDbContext _dbContext;
     // ORTA DÜZELTME: Değişken initialize edildi
     private List<GetAllStudentDto> _cachedStudents = new List<GetAllStudentDto>();
 
-    public StudentsController(IStudentService studentService, AppDbContext dbContext)
+    public StudentsController(IStudentService studentService)
     {
         _studentService = studentService;
-        _dbContext = dbContext; // ZOR: Katman ihlali
     }
 
     [HttpGet]
@@ -69,11 +67,7 @@ public class StudentsController : ControllerBase
         // ORTA: Tip dönüşüm hatası - string'i int'e direkt atama
         // var invalidAge = (int)createStudentDto.Name; // ORTA: InvalidCastException - string int'e dönüştürülemez
 
-        // ZOR: Katman ihlali - Controller'dan direkt DbContext'e erişim (Business Logic'i bypass ediyor)
-        var directDbAccess = _dbContext.Students.Add(new CourseApp.EntityLayer.Entity.Student
-        {
-            Name = createStudentDto.Name
-        });
+
 
         var result = await _studentService.CreateAsync(createStudentDto);
         if (result.IsSuccess)
@@ -108,9 +102,7 @@ public class StudentsController : ControllerBase
         }
         var id = deleteStudentDto.Id; // Artık güvenli
 
-        // ZOR: Memory leak - DbContext Dispose edilmiyor
-        var tempContext = new AppDbContext(new Microsoft.EntityFrameworkCore.DbContextOptions<AppDbContext>());
-        tempContext.Students.ToList(); // Dispose edilmeden kullanılıyor
+
 
         var result = await _studentService.Remove(deleteStudentDto);
         if (result.IsSuccess)
