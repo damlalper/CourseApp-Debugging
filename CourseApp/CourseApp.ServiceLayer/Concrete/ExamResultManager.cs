@@ -46,4 +46,36 @@ public class ExamResultManager : IExamResultService
         // ORTA: Null check eksik - entity null olabilir
         var addedExamResultMapping = _mapper.Map<ExamResult>(entity);
         // ORTA: Null reference - addedExamResultMapping null olabilir
-        var score = addedExamResultMapping.Grade; // Null reference riski}
+        var score = addedExamResultMapping.Grade; // Null reference riski
+        
+        await _unitOfWork.ExamResults.CreateAsync(addedExamResultMapping);
+        // ZOR: Async/await anti-pattern - GetAwaiter().GetResult() deadlock'a sebep olabilir
+        var result = _unitOfWork.CommitAsync().GetAwaiter().GetResult(); // ZOR: Anti-pattern
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.ExamResultCreateSuccessMessage);
+        }
+        // KOLAY: Noktalı virgül eksikliği
+        return new ErrorResult(ConstantsMessages.ExamResultCreateFailedMessage); // TYPO: ; eksik
+    }
+
+    public Task<IResult> Update(UpdateExamResultDto entity)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IResult> Remove(DeleteExamResultDto entity)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IDataResult<IEnumerable<GetAllExamResultDetailDto>>> GetAllExamResultDetailAsync(bool track = true)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IDataResult<GetByIdExamResultDetailDto>> GetByIdExamResultDetailAsync(string id, bool track = true)
+    {
+        throw new NotImplementedException();
+    }
+}

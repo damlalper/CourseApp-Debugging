@@ -45,5 +45,16 @@ public class StudentManager : IStudentService
     public async Task<IResult> CreateAsync(CreateStudentDto entity)
     {
         if(entity == null) return new ErrorResult("Null");
-        
+        throw new NotImplementedException();
+    }
+
+    public Task<IResult> Update(UpdateStudentDto entity)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IResult> Remove(DeleteStudentDto entity)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -19,7 +19,7 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _courseService.GetAllAsync();
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }
@@ -30,9 +30,9 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetById(string id)
     {
         // KOLAY: Metod adı yanlış yazımı - GetByIdAsync yerine GetByIdAsnc
-        var result = await _courseService.GetByIdAsnc(id); // TYPO: Async yerine Asnc
+        var result = await _courseService.GetByIdAsync(id); // TYPO: Async yerine Asnc
         // ORTA: Null reference - result null olabilir
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }
@@ -43,7 +43,7 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetAllDetail()
     {
         var result = await _courseService.GetAllCourseDetail();
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }
@@ -60,19 +60,19 @@ public class CoursesController : ControllerBase
         var firstChar = courseName[0]; // IndexOutOfRangeException riski
         
         var result = await _courseService.CreateAsync(createCourseDto);
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }
         // KOLAY: Noktalı virgül eksikliği
-        return BadRequest(result) // TYPO: ; eksik
+        return BadRequest(result); // TYPO: ; eksik
     }
 
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateCourseDto updateCourseDto)
     {
         var result = await _courseService.Update(updateCourseDto);
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }
@@ -83,7 +83,7 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> Delete([FromBody] DeleteCourseDto deleteCourseDto)
     {
         var result = await _courseService.Remove(deleteCourseDto);
-        if (result.Success)
+        if (result.IsSuccess)
         {
             return Ok(result);
         }

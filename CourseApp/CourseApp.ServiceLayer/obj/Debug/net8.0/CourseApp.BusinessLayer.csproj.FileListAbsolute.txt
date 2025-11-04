@@ -10,3 +10,15 @@ C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.Service
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseApp.BusinessLayer.AssemblyInfo.cs
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseApp.BusinessLayer.csproj.CoreCompileInputs.cache
 C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseApp.BusinessLayer.sourcelink.json
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.BusinessLayer.deps.json
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.BusinessLayer.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.BusinessLayer.pdb
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.DataAccessLayer.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.EntityLayer.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.DataAccessLayer.pdb
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\bin\Debug\net8.0\CourseApp.EntityLayer.pdb
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseAp.A5CC1EED.Up2Date
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseApp.BusinessLayer.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\refint\CourseApp.BusinessLayer.dll
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\CourseApp.BusinessLayer.pdb
+C:\Users\Lenovo\Desktop\hackathons\HackathonV2Csharp\CourseApp\CourseApp.ServiceLayer\obj\Debug\net8.0\ref\CourseApp.BusinessLayer.dll
