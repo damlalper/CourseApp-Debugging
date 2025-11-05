@@ -5,6 +5,7 @@ using CourseApp.EntityLayer.Dto.CourseDto;
 using CourseApp.ServiceLayer.Concrete;
 using CourseApp.ServiceLayer.Mapping;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CourseApp.Tests;
 
@@ -14,6 +15,7 @@ public class CourseManagerTests : IDisposable
     private readonly AppDbContext _context;
     private readonly UnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IMemoryCache _cache;
     private readonly CourseManager _courseManager;
 
     public CourseManagerTests()
@@ -35,7 +37,10 @@ public class CourseManagerTests : IDisposable
         });
         _mapper = mappingConfig.CreateMapper();
 
-        _courseManager = new CourseManager(_unitOfWork, _mapper);
+        // Set up MemoryCache
+        _cache = new MemoryCache(new MemoryCacheOptions());
+
+        _courseManager = new CourseManager(_unitOfWork, _mapper, _cache);
     }
 
     [Fact]

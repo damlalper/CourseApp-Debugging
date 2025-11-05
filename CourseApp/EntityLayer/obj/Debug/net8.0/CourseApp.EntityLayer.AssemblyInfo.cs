@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CourseApp.EntityLayer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9f562326986a124b8fc26629e58f1bfbfadb66b2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bec6b42755c17c2533fd95557b826259d41f49e9")]
 [assembly: System.Reflection.AssemblyProductAttribute("CourseApp.EntityLayer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CourseApp.EntityLayer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

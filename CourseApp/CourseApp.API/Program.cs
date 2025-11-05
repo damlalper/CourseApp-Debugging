@@ -44,6 +44,9 @@ public class Program
         // AutoMapper Configuration
         builder.Services.AddAutoMapper(typeof(StudentMapping).Assembly);
 
+        // Memory Cache Configuration
+        builder.Services.AddMemoryCache();
+
         // CORS Configuration
         builder.Services.AddCors(options =>
         {

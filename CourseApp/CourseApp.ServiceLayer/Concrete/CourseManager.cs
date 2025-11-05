@@ -6,6 +6,7 @@ using CourseApp.ServiceLayer.Abstract;
 using CourseApp.ServiceLayer.Utilities.Constants;
 using CourseApp.ServiceLayer.Utilities.Result;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,15 +17,27 @@ public class CourseManager : ICourseService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IMemoryCache _cache;
 
-    public CourseManager(IUnitOfWork unitOfWork, IMapper mapper)
+    public CourseManager(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _cache = cache;
     }
 
     public async Task<IDataResult<IEnumerable<GetAllCourseDto>>> GetAllAsync(bool track = true)
     {
+        const string cacheKey = "courseList";
+
+        if (_cache.TryGetValue(cacheKey, out IDataResult<IEnumerable<GetAllCourseDto>>? cachedResult))
+        {
+            if(cachedResult != null)
+            {
+                return cachedResult;
+            }
+        }
+
         var courseList = await _unitOfWork.Courses.GetAll(track).ToListAsync();
         var courseListMapping = _mapper.Map<IEnumerable<GetAllCourseDto>>(courseList);
 
@@ -33,7 +46,14 @@ public class CourseManager : ICourseService
             return new ErrorDataResult<IEnumerable<GetAllCourseDto>>(null, ConstantsMessages.CourseListFailedMessage);
         }
 
-        return new SuccessDataResult<IEnumerable<GetAllCourseDto>>(courseListMapping, ConstantsMessages.CourseListSuccessMessage);
+        var result = new SuccessDataResult<IEnumerable<GetAllCourseDto>>(courseListMapping, ConstantsMessages.CourseListSuccessMessage);
+
+        var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(5));
+
+        _cache.Set(cacheKey, result, cacheEntryOptions);
+
+        return result;
     }
 
     public async Task<IDataResult<GetByIdCourseDto>> GetByIdAsync(string id, bool track = true)
@@ -74,6 +94,7 @@ public class CourseManager : ICourseService
 
         if (result > 0)
         {
+            _cache.Remove("courseList");
             return new SuccessResult(ConstantsMessages.CourseCreateSuccessMessage);
         }
 
@@ -98,6 +119,7 @@ public class CourseManager : ICourseService
 
         if (result > 0)
         {
+            _cache.Remove("courseList");
             return new SuccessResult(ConstantsMessages.CourseDeleteSuccessMessage);
         }
 
@@ -130,6 +152,7 @@ public class CourseManager : ICourseService
 
         if (result > 0)
         {
+            _cache.Remove("courseList");
             return new SuccessResult(ConstantsMessages.CourseUpdateSuccessMessage);
         }
         return new ErrorResult(ConstantsMessages.CourseUpdateFailedMessage);
