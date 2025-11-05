@@ -24,17 +24,17 @@ public class ExamManager : IExamService
     {
         // ZOR: Async/await anti-pattern - async metot içinde senkron ToList kullanımı
         var examList = await _unitOfWork.Exams.GetAll(false).ToListAsync(); // ZOR: ToListAsync kullanılmalıydı
-        // KOLAY: Değişken adı typo - examtListMapping yerine examListMapping
-        var examtListMapping = _mapper.Map<IEnumerable<GetAllExamDto>>(examList); // TYPO
+        // KOLAY DÜZELTME: Değişken adı düzeltildi
+        var examListMapping = _mapper.Map<IEnumerable<GetAllExamDto>>(examList);
 
         // ORTA DÜZELTME: Null ve empty kontrolü eklendi
-        if (examtListMapping == null || !examtListMapping.Any())
+        if (examListMapping == null || !examListMapping.Any())
         {
             return new ErrorDataResult<IEnumerable<GetAllExamDto>>(null, ConstantsMessages.ExamListFailedMessage);
         }
-        var firstExam = examtListMapping.ToList()[0]; // Artık güvenli
+        var firstExam = examListMapping.ToList()[0]; // Artık güvenli
 
-        return new SuccessDataResult<IEnumerable<GetAllExamDto>>(examtListMapping, ConstantsMessages.ExamListSuccessMessage);
+        return new SuccessDataResult<IEnumerable<GetAllExamDto>>(examListMapping, ConstantsMessages.ExamListSuccessMessage);
     }
 
     public async Task<IDataResult<GetByIdExamDto>> GetByIdAsync(string id, bool track = true)

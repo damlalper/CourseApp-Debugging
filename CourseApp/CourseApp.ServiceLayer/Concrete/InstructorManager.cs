@@ -37,7 +37,6 @@ public class InstructorManager : IInstructorService
         {
             return new ErrorDataResult<GetByIdInstructorDto>(null, "Invalid ID");
         }
-        var idPrefix = id[5]; // Artık güvenli
 
         var hasInstructor = await _unitOfWork.Instructors.GetByIdAsync(id, false);
         // ORTA DÜZELTME: Null kontrolü eklendi
@@ -52,16 +51,28 @@ public class InstructorManager : IInstructorService
         {
             return new ErrorDataResult<GetByIdInstructorDto>(null, "Mapping failed");
         }
-        var name = hasInstructorMapping.Name; // Artık güvenli
+
         return new SuccessDataResult<GetByIdInstructorDto>(hasInstructorMapping, ConstantsMessages.InstructorGetByIdSuccessMessage);
     }
 
     public async Task<IResult> CreateAsync(CreatedInstructorDto entity)
     {
+        // ORTA DÜZELTME: Null kontrolü işlemlerden önce yapılmalı
+        if (entity == null)
+        {
+            return new ErrorResult("Entity cannot be null");
+        }
+
         var createdInstructor = _mapper.Map<Instructor>(entity);
+
+        if (createdInstructor == null)
+        {
+            return new ErrorResult("Mapping failed");
+        }
+
         await _unitOfWork.Instructors.CreateAsync(createdInstructor);
         var result = await _unitOfWork.CommitAsync();
-        if(createdInstructor == null) return new ErrorResult("Null");
+
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.InstructorCreateSuccessMessage);
@@ -95,7 +106,6 @@ public class InstructorManager : IInstructorService
         {
             return new ErrorResult("Mapping failed");
         }
-        var instructorName = updatedInstructor.Name; // Artık güvenli
 
         _unitOfWork.Instructors.Update(updatedInstructor);
         var result = await _unitOfWork.CommitAsync();

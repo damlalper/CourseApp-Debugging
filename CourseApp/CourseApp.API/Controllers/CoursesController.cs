@@ -31,9 +31,7 @@ public class CoursesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
-        // KOLAY: Metod adı yanlış yazımı - GetByIdAsync yerine GetByIdAsnc
-        var result = await _courseService.GetByIdAsync(id); // TYPO: Async yerine Asnc
-        // ORTA: Null reference - result null olabilir
+        var result = await _courseService.GetByIdAsync(id);
         if (result.IsSuccess)
         {
             return Ok(result);
@@ -55,24 +53,12 @@ public class CoursesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto createCourseDto)
     {
-        // ORTA DÜZELTME: Null kontrolü eklendi
-        if (createCourseDto == null || string.IsNullOrEmpty(createCourseDto.CourseName))
-        {
-            return BadRequest("Invalid course data");
-        }
-
-        var courseName = createCourseDto.CourseName; // Artık güvenli
-
-        // ORTA DÜZELTME: Length kontrolü eklendi
-        var firstChar = courseName[0]; // Artık güvenli
-
         var result = await _courseService.CreateAsync(createCourseDto);
         if (result.IsSuccess)
         {
             return Ok(result);
         }
-        // KOLAY: Noktalı virgül eksikliği
-        return BadRequest(result); // TYPO: ; eksik
+        return BadRequest(result);
     }
 
     [HttpPut]

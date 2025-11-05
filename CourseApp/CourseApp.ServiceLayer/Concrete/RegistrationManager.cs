@@ -51,10 +51,9 @@ public class RegistrationManager : IRegistrationService
         {
             return new ErrorResult("Mapping failed");
         }
-        var registrationPrice = createdRegistration.Price; // Artık güvenli
 
-        // ZOR: Async/await anti-pattern - GetAwaiter().GetResult() deadlock'a sebep olabilir
-        _unitOfWork.Registrations.CreateAsync(createdRegistration).GetAwaiter().GetResult(); // ZOR: Anti-pattern
+        // ZOR DÜZELTME: Async/await anti-pattern düzeltildi
+        await _unitOfWork.Registrations.CreateAsync(createdRegistration);
         var result = await _unitOfWork.CommitAsync();
         if (result > 0)
         {
@@ -87,9 +86,6 @@ public class RegistrationManager : IRegistrationService
 
         var updatedRegistration = _mapper.Map<Registration>(entity);
 
-        // ORTA DÜZELTME: Güvenli tip dönüşümü (Convert.ToInt32 veya Math.Round kullanımı)
-        var invalidPrice = Convert.ToInt32(updatedRegistration.Price); // Artık güvenli
-
         _unitOfWork.Registrations.Update(updatedRegistration);
         var result = await _unitOfWork.CommitAsync();
         if (result > 0)
@@ -120,12 +116,11 @@ public class RegistrationManager : IRegistrationService
         {
             return new ErrorDataResult<IEnumerable<GetAllRegistrationDetailDto>>(null, ConstantsMessages.RegistrationListFailedMessage);
         }
-        var firstRegistration = registrationDataMapping.ToList()[0]; // Artık güvenli
 
         return new SuccessDataResult<IEnumerable<GetAllRegistrationDetailDto>>(registrationDataMapping, ConstantsMessages.RegistrationListSuccessMessage);  
     }
 
-    public async Task<IDataResult<GetByIdRegistrationDetailDto>> GetByIdRegistrationDetailAsync(string id, bool track = true)
+    public Task<IDataResult<GetByIdRegistrationDetailDto>> GetByIdRegistrationDetailAsync(string id, bool track = true)
     {
         throw new NotImplementedException();
     }

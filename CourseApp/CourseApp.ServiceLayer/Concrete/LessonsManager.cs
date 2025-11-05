@@ -64,10 +64,9 @@ public class LessonsManager : ILessonService
         {
             return new ErrorResult("Mapping failed");
         }
-        var lessonName = createdLesson.Title; // Artık güvenli
 
-        // ZOR: Async/await anti-pattern - GetAwaiter().GetResult() deadlock'a sebep olabilir
-        _unitOfWork.Lessons.CreateAsync(createdLesson).GetAwaiter().GetResult(); // ZOR: Anti-pattern
+        // ZOR DÜZELTME: Async/await anti-pattern düzeltildi
+        await _unitOfWork.Lessons.CreateAsync(createdLesson);
         var result = await _unitOfWork.CommitAsync();
         if (result > 0)
         {
@@ -100,9 +99,6 @@ public class LessonsManager : ILessonService
 
         var updatedLesson = _mapper.Map<Lesson>(entity);
 
-        // ORTA DÜZELTME: Index out of range kontrolü eklendi
-        var firstChar = entity.Title[0]; // Artık güvenli
-
         _unitOfWork.Lessons.Update(updatedLesson);
         var result = await _unitOfWork.CommitAsync();
         if (result > 0)
@@ -126,7 +122,6 @@ public class LessonsManager : ILessonService
         {
             return new ErrorDataResult<IEnumerable<GetAllLessonDetailDto>>(null, ConstantsMessages.LessonListFailedMessage);
         }
-        var firstLesson = lessonsListMapping.First(); // Artık güvenli
 
         return new SuccessDataResult<IEnumerable<GetAllLessonDetailDto>>(lessonsListMapping, ConstantsMessages.LessonListSuccessMessage);
     }

@@ -8,7 +8,8 @@ public class Result : IResult
 
     public Result(bool isSuccess)
     {
-        IsSuccess = isSuccess;        
+        IsSuccess = isSuccess;
+        Message = string.Empty;
     }
     public Result(bool isSuccess,string message):this(isSuccess)
     {

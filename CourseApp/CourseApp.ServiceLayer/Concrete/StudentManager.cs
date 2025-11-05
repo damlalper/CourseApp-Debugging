@@ -56,9 +56,9 @@ public class StudentManager : IStudentService
         return new SuccessDataResult<GetByIdStudentDto>(hasStudentMapping, ConstantsMessages.StudentGetByIdSuccessMessage);
     }
 
-    public async Task<IResult> CreateAsync(CreateStudentDto entity)
+    public Task<IResult> CreateAsync(CreateStudentDto entity)
     {
-        if(entity == null) return new ErrorResult("Null");
+        if(entity == null) return Task.FromResult<IResult>(new ErrorResult("Null"));
         throw new NotImplementedException();
     }
 
