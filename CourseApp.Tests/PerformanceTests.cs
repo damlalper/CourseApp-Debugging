@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using CourseApp.DataAccessLayer.Concrete;
 using CourseApp.EntityLayer.Entity;
 using Microsoft.AspNetCore.Authentication;
+using CourseApp.ServiceLayer.Mapping;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,9 @@ public class PerformanceTests : IClassFixture<WebApplicationFactory<Program>>
                 {
                     options.UseInMemoryDatabase("TestDatabase");
                 });
+
+                // Add AutoMapper for testing
+                services.AddAutoMapper(typeof(StudentMapping).Assembly);
 
                 // Disable authentication for performance tests
                 services.AddAuthentication(options =>

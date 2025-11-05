@@ -448,7 +448,7 @@ Tüm zor seviye hatalar başarıyla çözüldü ve %100 test coverage ile doğru
 - ✅ Performanslı ve ölçeklenebilir
 - ✅ Doğru mimari prensiplere uygun
 - ✅ Async/await best practice'lerine uygun
-- ✅ Test edilebilir ve sürdürülebilir
+- ✅ Test edilebilir ve sürdürülelebilir
 
 **Son Test Komutu:**
 ```bash
@@ -456,6 +456,56 @@ dotnet test CourseApp.Tests/CourseApp.Tests.csproj --verbosity normal
 ```
 
 **Sonuç:** Başarılı! - Başarısız: 0, Başarılı: 4, Atlanan: 0, Toplam: 4 🎉
+
+---
+
+### 🚀 Sonradan Eklenen İyileştirmeler ve Düzeltmeler
+
+Projenin ilk analizinden sonra, kod kalitesini ve işlevselliği daha da artırmak amacıyla ek geliştirmeler yapılmıştır.
+
+--- 
+
+### 1. Eksik İşlevselliklerin Tamamlanması (Runtime Hataları)
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `StudentManager` ve `ExamResultManager` gibi bazı servis sınıflarında `CreateAsync`, `Update` ve `Remove` metotları uygulanmamıştı. Bu metotlar çağrıldığında `NotImplementedException` fırlatarak uygulamanın çökmesine neden oluyordu. |
+| ⚠️ **Neden problemdi?** | Bu durum, uygulamanın temel CRUD (Oluşturma, Güncelleme, Silme) işlevlerinin önemli bir kısmının çalışmadığı anlamına geliyordu. API endpoint'leri mevcut olsa da, arka plandaki servisler eksik olduğu için bu endpoint'lere yapılan istekler doğrudan çalışma zamanı (runtime) hatasıyla sonuçlanıyordu. |
+| ✅ **Nasıl çözdünüz?** | İlgili tüm servislerdeki eksik metotlar, `Unit of Work` desenine uygun olarak dolduruldu. Artık metotlar, DTO'dan entity'ye haritalama (mapping) yapıyor, ilgili repository metotlarını çağırıyor ve veritabanı işlemlerini `CommitAsync` ile tamamlıyor. Hata ve başarı durumları `SuccessResult` veya `ErrorResult` ile doğru bir şekilde yönetiliyor. |
+| 🔁 **Alternatifler?** | Bu temel işlevselliklerin tamamlanması için bir alternatif yoktur; bu, uygulamanın çalışması için zorunlu bir adımdır. |
+
+---
+
+### 2. Mantıksal Hatanın Giderilmesi ve Test ile Doğrulanması
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | `CourseManager`, yeni bir kurs oluştururken veya güncellerken, kursa atanan `InstructorID`'nin veritabanında geçerli bir eğitmen olup olmadığını kontrol etmiyordu. |
+| ⚠️ **Neden problemdi?** | Bu bir mantık hatasıydı. Geçersiz bir `InstructorID` ile yapılan isteklerde, kod veritabanına kaydetmeye çalıştığı anda yabancı anahtar (foreign key) kısıtlaması nedeniyle `DbUpdateException` fırlatıp çöküyordu. Uygulama, bu hatayı kontrol altına alıp kullanıcıya anlamlı bir mesaj ("Eğitmen bulunamadı" gibi) göstermek yerine `500 Internal Server Error` döndürüyordu. |
+| ✅ **Nasıl çözdünüz?** | 1. **Test Yazıldı:** Önce bu hatayı kanıtlayan `CreateAsync_Should_ReturnError_WhenInstructorIdDoesNotExist` adında yeni bir birim testi yazıldı. Bu test, geçersiz ID ile işlem yapıldığında metodun `IsSuccess=false` ve doğru hata mesajını dönmesi gerektiğini belirtti.<br>2. **Kod Düzeltildi:** `CourseManager` içindeki `ValidateCourse` metoduna, `InstructorID`'nin `Instructors` tablosunda var olup olmadığını kontrol eden bir mantık eklendi. Eğer eğitmen yoksa, işlem veritabanına gitmeden, `ErrorResult("Instructor not found.")` döndürerek erken sonlandırıldı.<br>3. **Doğrulama:** Düzeltme sonrası tüm testler tekrar çalıştırıldı ve yeni testin de geçtiği, mevcut testlerin bozulmadığı doğrulandı. |
+| 🔁 **Alternatifler?** | Bu kontrol, `FluentValidation` gibi harici bir kütüphane ile de yapılabilirdi. Ancak projenin mevcut yapısında, bu validasyonu servis katmanında bir metot ile yapmak en tutarlı yaklaşımdı. |
+
+---
+
+### 3. Kapsamlı Kod Kalitesi İyileştirmesi
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | Tüm servis (`Manager`) sınıfları, artık var olmayan hataları işaret eden onlarca **yanıltıcı ve güncelliğini yitirmiş yorum satırı** ile doluydu. Ayrıca, metotlar içinde tanımlanmış ama hiç **kullanılmayan çok sayıda değişken** vardı. |
+| ⚠️ **Neden problemdi?** | Bu durum, kodun okunabilirliğini ciddi şekilde düşürüyor, kod tekrarı ve kafa karışıklığı yaratıyordu. Yeni bir geliştiricinin kodu anlaması ve bakım yapması çok zordu. Ayrıca, derleyici uyarılarına neden oluyordu. |
+| ✅ **Nasıl çözdünüz?** | Projedeki **tüm servis sınıfları** tek tek elden geçirildi. Yanıltıcı veya gereksiz tüm yorumlar (`// ORTA DÜZELTME`, `// TYPO` vb.) temizlendi. Kullanılmayan tüm değişkenler koddan çıkarıldı. Bu işlem sonucunda servis katmanı daha temiz, daha okunabilir ve profesyonel bir hale getirildi. |
+| 🔁 **Alternatifler?** | Yorumları tek tek güncellemek bir seçenek olabilirdi, ancak kodun kendisini açıklayıcı hale getirmek ve gereksiz yorumları tamamen kaldırmak, "Clean Code" prensiplerine daha uygun bir yaklaşımdır. |
+
+---
+
+### 4. Test Altyapısının Tamamlanması ve Hatalarının Giderilmesi
+
+| Soru | Açıklama |
+|------|-----------|
+| ❌ **Sorun neydi?** | Yeni testler ekleme sürecinde, test projesinin kendisinde de önemli eksiklikler ve hatalar olduğu ortaya çıktı. `CourseManager` için yapılan testler, `Moq` kütüphanesinin asenkron metotları desteklememesi nedeniyle çöküyordu. Ayrıca, `Course` entity'si için bir **AutoMapper profili (`CourseMapping.cs`) hiç oluşturulmamıştı** ve bu durum, testlerin `InternalServerError` almasına neden oluyordu. |
+| ⚠️ **Neden problemdi?** | Eksik veya hatalı test altyapısı, projenin güvenilir bir şekilde test edilmesini engelliyordu. Özellikle eksik `CourseMapping` profili, sadece testlerin değil, potansiyel olarak uygulamanın kendisinin de çalışma zamanında hata vermesine neden olabilecek kritik bir eksiklikti. |
+| ✅ **Nasıl çözdünüz?** | 1. **`CourseMapping.cs` Oluşturuldu:** Ana uygulama koduna, `Course` ve ilgili DTO'lar arasındaki dönüşümleri tanımlayan `CourseMapping.cs` profili eklendi.<br>2. **Testler Yeniden Yapılandırıldı:** `CourseManagerTests.cs`, `Moq` kullanmak yerine, `PerformanceTests`'de olduğu gibi hafıza-içi (in-memory) veritabanı kullanacak şekilde baştan yazıldı. Bu, asenkron veritabanı operasyonlarının doğru test edilmesini sağladı.<br>3. **Yapılandırma Düzeltildi:** Test projelerindeki eksik `using` ifadeleri ve hatalı `AutoMapper` yapılandırmaları düzeltildi. |
+| 🔁 **Alternatifler?** | Asenkron metotları test etmek için `MockQueryable` gibi üçüncü parti kütüphaneler kullanılabilirdi. Ancak, proje içinde zaten var olan in-memory veritabanı desenini kullanmak, yeni bir bağımlılık eklemeden tutarlı bir çözüm sağladı. |
 
 ---
 

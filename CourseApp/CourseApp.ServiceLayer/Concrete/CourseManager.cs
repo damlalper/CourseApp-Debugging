@@ -61,7 +61,7 @@ public class CourseManager : ICourseService
             return new ErrorResult("Course data cannot be null.");
         }
 
-        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate);
+        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate, entity.InstructorID);
         if (!validationResult.IsSuccess)
         {
             return validationResult;
@@ -111,7 +111,7 @@ public class CourseManager : ICourseService
             return new ErrorResult("Course data cannot be null.");
         }
 
-        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate, entity.Id);
+        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate, entity.InstructorID, entity.Id);
         if (!validationResult.IsSuccess)
         {
             return validationResult;
@@ -148,7 +148,7 @@ public class CourseManager : ICourseService
         return new SuccessDataResult<IEnumerable<GetAllCourseDetailDto>>(courseDetailDtoList, ConstantsMessages.CourseDetailsFetchedSuccessfully);
     }
 
-    private async Task<IResult> ValidateCourse(string? courseName, DateTime startDate, DateTime endDate, string? id = null)
+    private async Task<IResult> ValidateCourse(string? courseName, DateTime startDate, DateTime endDate, string? instructorId, string? id = null)
     {
         var nameCheck = CourseNameIsNullOrEmpty(courseName);
         if (!nameCheck.IsSuccess) return nameCheck;
@@ -158,6 +158,15 @@ public class CourseManager : ICourseService
 
         var dateCheck = CheckCourseDates(startDate, endDate);
         if (!dateCheck.IsSuccess) return dateCheck;
+
+        if (!string.IsNullOrEmpty(instructorId))
+        {
+            var instructorExists = await _unitOfWork.Instructors.GetByIdAsync(instructorId);
+            if (instructorExists == null)
+            {
+                return new ErrorResult("Instructor not found.");
+            }
+        }
 
         var uniqueCheck = await CourseNameUniqueCheck(courseName!, id);
         if (!uniqueCheck.IsSuccess) return uniqueCheck;
