@@ -6,13 +6,13 @@ namespace CourseApp.DataAccessLayer.UnitOfWork;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;
-    private StudentRepository _studentRepository;
-    private LessonRepository _lessonRepository;
-    private CourseRepository _courseRepository;
-    private RegistrationRepository _registrationRepository;
-    private ExamRepository _examRepository;
-    private ExamResultRepository _examResultRepository;
-    private InstructorRepository _instructorRepository;
+    private StudentRepository? _studentRepository;
+    private LessonRepository? _lessonRepository;
+    private CourseRepository? _courseRepository;
+    private RegistrationRepository? _registrationRepository;
+    private ExamRepository? _examRepository;
+    private ExamResultRepository? _examResultRepository;
+    private InstructorRepository? _instructorRepository;
 
     public UnitOfWork(AppDbContext context)
     {

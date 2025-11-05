@@ -43,47 +43,98 @@ public class ExamResultManager : IExamResultService
 
     public async Task<IResult> CreateAsync(CreateExamResultDto entity)
     {
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (entity == null)
         {
             return new ErrorResult("Entity cannot be null");
         }
 
         var addedExamResultMapping = _mapper.Map<ExamResult>(entity);
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (addedExamResultMapping == null)
         {
             return new ErrorResult("Mapping failed");
         }
 
         await _unitOfWork.ExamResults.CreateAsync(addedExamResultMapping);
-        // ZOR DÜZELTME: Async/await anti-pattern düzeltildi
         var result = await _unitOfWork.CommitAsync();
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.ExamResultCreateSuccessMessage);
         }
-        // KOLAY: Noktalı virgül eksikliği
-        return new ErrorResult(ConstantsMessages.ExamResultCreateFailedMessage); // TYPO: ; eksik
+        
+        return new ErrorResult(ConstantsMessages.ExamResultCreateFailedMessage);
     }
 
-    public Task<IResult> Update(UpdateExamResultDto entity)
+    public async Task<IResult> Update(UpdateExamResultDto entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            return new ErrorResult("ExamResult data cannot be null.");
+        }
+
+        var existingExamResult = await _unitOfWork.ExamResults.GetByIdAsync(entity.Id, true);
+        if (existingExamResult == null)
+        {
+            return new ErrorResult(ConstantsMessages.ExamResultGetByIdFailedMessage);
+        }
+
+        _mapper.Map(entity, existingExamResult);
+
+        _unitOfWork.ExamResults.Update(existingExamResult);
+        var result = await _unitOfWork.CommitAsync();
+
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.ExamResultUpdateSuccessMessage);
+        }
+        return new ErrorResult(ConstantsMessages.ExamResultUpdateFailedMessage);
     }
 
-    public Task<IResult> Remove(DeleteExamResultDto entity)
+    public async Task<IResult> Remove(DeleteExamResultDto entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            return new ErrorResult("ExamResult data cannot be null.");
+        }
+
+        var examResultToDelete = await _unitOfWork.ExamResults.GetByIdAsync(entity.Id, true);
+        if (examResultToDelete == null)
+        { 
+            return new ErrorResult(ConstantsMessages.ExamResultGetByIdFailedMessage);
+        }
+
+        _unitOfWork.ExamResults.Remove(examResultToDelete);
+        var result = await _unitOfWork.CommitAsync();
+
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.ExamResultDeleteSuccessMessage);
+        }
+        return new ErrorResult(ConstantsMessages.ExamResultDeleteFailedMessage);
     }
 
-    public Task<IDataResult<IEnumerable<GetAllExamResultDetailDto>>> GetAllExamResultDetailAsync(bool track = true)
+    public async Task<IDataResult<IEnumerable<GetAllExamResultDetailDto>>> GetAllExamResultDetailAsync(bool track = true)
     {
-        throw new NotImplementedException();
+        var examResultList = await _unitOfWork.ExamResults.GetAllExamResultDetail(false).ToListAsync();
+        var examResultListMapping = _mapper.Map<IEnumerable<GetAllExamResultDetailDto>>(examResultList);
+
+        if (!examResultList.Any())
+        {
+            return new ErrorDataResult<IEnumerable<GetAllExamResultDetailDto>>(null, ConstantsMessages.ExamResultListFailedMessage);
+        }
+
+        return new SuccessDataResult<IEnumerable<GetAllExamResultDetailDto>>(examResultListMapping, ConstantsMessages.ExamResultListSuccessMessage);
     }
 
-    public Task<IDataResult<GetByIdExamResultDetailDto>> GetByIdExamResultDetailAsync(string id, bool track = true)
+    public async Task<IDataResult<GetByIdExamResultDetailDto>> GetByIdExamResultDetailAsync(string id, bool track = true)
     {
-        throw new NotImplementedException();
+        var examResult = await _unitOfWork.ExamResults.GetByIdExamResultDetailAsync(id, false);
+
+        if (examResult == null)
+        {
+            return new ErrorDataResult<GetByIdExamResultDetailDto>(null, ConstantsMessages.ExamResultListFailedMessage);
+        }
+
+        var examResultMapping = _mapper.Map<GetByIdExamResultDetailDto>(examResult);
+        return new SuccessDataResult<GetByIdExamResultDetailDto>(examResultMapping, ConstantsMessages.ExamResultListSuccessMessage);
     }
 }

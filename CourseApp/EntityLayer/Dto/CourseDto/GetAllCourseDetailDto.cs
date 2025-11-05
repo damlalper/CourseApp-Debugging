@@ -4,7 +4,7 @@ namespace CourseApp.EntityLayer.Dto.CourseDto;
 
 public class GetAllCourseDetailDto
 {
-    public string Id { get; set; } = null!;
+    public string? Id { get; set; }
     public bool IsActive { get; set; } = false;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public string? CourseName { get; set; }

@@ -6,6 +6,9 @@ using CourseApp.ServiceLayer.Abstract;
 using CourseApp.ServiceLayer.Utilities.Constants;
 using CourseApp.ServiceLayer.Utilities.Result;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CourseApp.ServiceLayer.Concrete;
 
@@ -21,7 +24,7 @@ public class InstructorManager : IInstructorService
 
     public async Task<IDataResult<IEnumerable<GetAllInstructorDto>>> GetAllAsync(bool track = true)
     {
-        var instructorList = await _unitOfWork.Instructors.GetAll(false).ToListAsync();
+        var instructorList = await _unitOfWork.Instructors.GetAll(track).ToListAsync();
         var instructorListMapping = _mapper.Map<IEnumerable<GetAllInstructorDto>>(instructorList);
         if (!instructorList.Any())
         {
@@ -32,21 +35,18 @@ public class InstructorManager : IInstructorService
 
     public async Task<IDataResult<GetByIdInstructorDto>> GetByIdAsync(string id, bool track = true)
     {
-        // ORTA DÜZELTME: Null ve length check eklendi
-        if (string.IsNullOrEmpty(id) || id.Length < 6)
+        if (string.IsNullOrEmpty(id))
         {
             return new ErrorDataResult<GetByIdInstructorDto>(null, "Invalid ID");
         }
 
-        var hasInstructor = await _unitOfWork.Instructors.GetByIdAsync(id, false);
-        // ORTA DÜZELTME: Null kontrolü eklendi
+        var hasInstructor = await _unitOfWork.Instructors.GetByIdAsync(id, track);
         if (hasInstructor == null)
         {
             return new ErrorDataResult<GetByIdInstructorDto>(null, ConstantsMessages.InstructorGetByIdFailedMessage);
         }
 
         var hasInstructorMapping = _mapper.Map<GetByIdInstructorDto>(hasInstructor);
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (hasInstructorMapping == null)
         {
             return new ErrorDataResult<GetByIdInstructorDto>(null, "Mapping failed");
@@ -57,14 +57,12 @@ public class InstructorManager : IInstructorService
 
     public async Task<IResult> CreateAsync(CreatedInstructorDto entity)
     {
-        // ORTA DÜZELTME: Null kontrolü işlemlerden önce yapılmalı
         if (entity == null)
         {
             return new ErrorResult("Entity cannot be null");
         }
 
         var createdInstructor = _mapper.Map<Instructor>(entity);
-
         if (createdInstructor == null)
         {
             return new ErrorResult("Mapping failed");
@@ -82,9 +80,20 @@ public class InstructorManager : IInstructorService
 
     public async Task<IResult> Remove(DeletedInstructorDto entity)
     {
-        var deletedInstructor = _mapper.Map<Instructor>(entity);
-        _unitOfWork.Instructors.Remove(deletedInstructor);
+        if (entity == null || string.IsNullOrEmpty(entity.Id))
+        {
+            return new ErrorResult("Instructor data cannot be null.");
+        }
+
+        var instructorToDelete = await _unitOfWork.Instructors.GetByIdAsync(entity.Id);
+        if (instructorToDelete == null)
+        {
+            return new ErrorResult(ConstantsMessages.InstructorGetByIdFailedMessage);
+        }
+
+        _unitOfWork.Instructors.Remove(instructorToDelete);
         var result = await _unitOfWork.CommitAsync();
+
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.InstructorDeleteSuccessMessage);
@@ -94,26 +103,27 @@ public class InstructorManager : IInstructorService
 
     public async Task<IResult> Update(UpdatedInstructorDto entity)
     {
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (entity == null)
         {
             return new ErrorResult("Entity cannot be null");
         }
 
-        var updatedInstructor = _mapper.Map<Instructor>(entity);
-        // ORTA DÜZELTME: Null kontrolü eklendi
-        if (updatedInstructor == null)
+        var existingInstructor = await _unitOfWork.Instructors.GetByIdAsync(entity.Id, true);
+        if (existingInstructor == null)
         {
-            return new ErrorResult("Mapping failed");
+            return new ErrorResult(ConstantsMessages.InstructorGetByIdFailedMessage);
         }
 
-        _unitOfWork.Instructors.Update(updatedInstructor);
+        _mapper.Map(entity, existingInstructor);
+
+        _unitOfWork.Instructors.Update(existingInstructor);
         var result = await _unitOfWork.CommitAsync();
+
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.InstructorUpdateSuccessMessage);
         }
-        // ORTA DÜZELTME: ErrorResult olarak değiştirildi
+        
         return new ErrorResult(ConstantsMessages.InstructorUpdateFailedMessage);
     }
 }

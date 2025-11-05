@@ -33,42 +33,89 @@ public class StudentManager : IStudentService
 
     public async Task<IDataResult<GetByIdStudentDto>> GetByIdAsync(string id, bool track = true)
     {
-        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
         if (string.IsNullOrEmpty(id))
         {
             return new ErrorDataResult<GetByIdStudentDto>(null, "Invalid ID");
         }
 
         var hasStudent = await _unitOfWork.Students.GetByIdAsync(id, false);
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (hasStudent == null)
         {
             return new ErrorDataResult<GetByIdStudentDto>(null, ConstantsMessages.StudentGetByIdFailedMessage);
         }
 
         var hasStudentMapping = _mapper.Map<GetByIdStudentDto>(hasStudent);
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (hasStudentMapping == null)
         {
             return new ErrorDataResult<GetByIdStudentDto>(null, "Mapping failed");
         }
-        var name = hasStudentMapping.Name; // Artık güvenli
+        
         return new SuccessDataResult<GetByIdStudentDto>(hasStudentMapping, ConstantsMessages.StudentGetByIdSuccessMessage);
     }
 
-    public Task<IResult> CreateAsync(CreateStudentDto entity)
+    public async Task<IResult> CreateAsync(CreateStudentDto entity)
     {
-        if(entity == null) return Task.FromResult<IResult>(new ErrorResult("Null"));
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            return new ErrorResult("Student data cannot be null.");
+        }
+
+        var student = _mapper.Map<Student>(entity);
+        await _unitOfWork.Students.CreateAsync(student);
+        var result = await _unitOfWork.CommitAsync();
+
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.StudentCreateSuccessMessage);
+        }
+        return new ErrorResult(ConstantsMessages.StudentCreateFailedMessage);
     }
 
-    public Task<IResult> Update(UpdateStudentDto entity)
+    public async Task<IResult> Update(UpdateStudentDto entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            return new ErrorResult("Student data cannot be null.");
+        }
+
+        var existingStudent = await _unitOfWork.Students.GetByIdAsync(entity.Id, true);
+        if (existingStudent == null)
+        {
+            return new ErrorResult(ConstantsMessages.StudentGetByIdFailedMessage);
+        }
+
+        _mapper.Map(entity, existingStudent);
+
+        _unitOfWork.Students.Update(existingStudent);
+        var result = await _unitOfWork.CommitAsync();
+
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.StudentUpdateSuccessMessage);
+        }
+        return new ErrorResult(ConstantsMessages.StudentUpdateFailedMessage);
     }
 
-    public Task<IResult> Remove(DeleteStudentDto entity)
+    public async Task<IResult> Remove(DeleteStudentDto entity)
     {
-        throw new NotImplementedException();
+        if (entity == null)
+        {
+            return new ErrorResult("Student data cannot be null.");
+        }
+        
+        var studentToDelete = await _unitOfWork.Students.GetByIdAsync(entity.Id, true);
+        if (studentToDelete == null)
+        {
+            return new ErrorResult(ConstantsMessages.StudentGetByIdFailedMessage);
+        }
+
+        _unitOfWork.Students.Remove(studentToDelete);
+        var result = await _unitOfWork.CommitAsync();
+
+        if (result > 0)
+        {
+            return new SuccessResult(ConstantsMessages.StudentDeleteSuccessMessage);
+        }
+        return new ErrorResult(ConstantsMessages.StudentDeleteFailedMessage);
     }
 }

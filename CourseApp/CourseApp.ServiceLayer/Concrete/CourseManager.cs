@@ -1,57 +1,43 @@
-﻿using CourseApp.DataAccessLayer.UnitOfWork;
+﻿using AutoMapper;
+using CourseApp.DataAccessLayer.UnitOfWork;
 using CourseApp.EntityLayer.Dto.CourseDto;
 using CourseApp.EntityLayer.Entity;
 using CourseApp.ServiceLayer.Abstract;
 using CourseApp.ServiceLayer.Utilities.Constants;
 using CourseApp.ServiceLayer.Utilities.Result;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
 using System.Linq;
-using CourseApp.EntityLayer.Dto.LessonDto;
+using System.Threading.Tasks;
 
 namespace CourseApp.ServiceLayer.Concrete;
 
 public class CourseManager : ICourseService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public CourseManager(IUnitOfWork unitOfWork)
+    public CourseManager(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<IDataResult<IEnumerable<GetAllCourseDto>>> GetAllAsync(bool track = true)
     {
-        // ZOR: N+1 Problemi - Her course için Instructor ayrı sorgu ile çekiliyor
-        var courseList = await _unitOfWork.Courses.GetAllCourseDetail(false).ToListAsync();
-        
-        // ZOR: N+1 - Include/ThenInclude kullanılmamış, lazy loading aktif
-        var result = courseList.Select(course => new GetAllCourseDto
-        {
-            CourseName = course.CourseName,
-            CreatedDate = course.CreatedDate,
-            EndDate = course.EndDate,
-            Id = course.ID,
-            InstructorID = course.InstructorID,
-            // ZOR: Her course için ayrı sorgu - course.Instructor?.Name çekiliyor
-            // ORTA: Null reference riski - course null olabilir
-            IsActive = course.IsActive,
-            StartDate = course.StartDate
-        }).ToList();
+        var courseList = await _unitOfWork.Courses.GetAll(track).ToListAsync();
+        var courseListMapping = _mapper.Map<IEnumerable<GetAllCourseDto>>(courseList);
 
-        // ORTA DÜZELTME: Boş liste kontrolü eklendi
-        if (result == null || result.Count == 0)
+        if (courseListMapping == null || !courseListMapping.Any())
         {
             return new ErrorDataResult<IEnumerable<GetAllCourseDto>>(null, ConstantsMessages.CourseListFailedMessage);
         }
-        var firstCourse = result[0]; // Artık güvenli
 
-        return new SuccessDataResult<IEnumerable<GetAllCourseDto>>(result, ConstantsMessages.CourseListSuccessMessage);
+        return new SuccessDataResult<IEnumerable<GetAllCourseDto>>(courseListMapping, ConstantsMessages.CourseListSuccessMessage);
     }
 
     public async Task<IDataResult<GetByIdCourseDto>> GetByIdAsync(string id, bool track = true)
     {
-        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
         if (string.IsNullOrEmpty(id))
         {
             return new ErrorDataResult<GetByIdCourseDto>(null, "Invalid ID");
@@ -59,39 +45,31 @@ public class CourseManager : ICourseService
 
         var hasCourse = await _unitOfWork.Courses.GetByIdAsync(id, track);
 
-        // ORTA DÜZELTME: Null kontrolü eklendi
         if (hasCourse == null)
         {
             return new ErrorDataResult<GetByIdCourseDto>(null, ConstantsMessages.CourseGetByIdFailedMessage);
         }
 
-        var course = new GetByIdCourseDto
-        {
-            CourseName = hasCourse.CourseName, // Artık güvenli
-            CreatedDate = hasCourse.CreatedDate,
-            EndDate = hasCourse.EndDate,
-            InstructorID = hasCourse.InstructorID,
-            IsActive = hasCourse.IsActive,
-            StartDate = hasCourse.StartDate,
-            Id = hasCourse.ID
-        };
-
-        return new SuccessDataResult<GetByIdCourseDto>(course, ConstantsMessages.CourseGetByIdSuccessMessage);
+        var courseMapping = _mapper.Map<GetByIdCourseDto>(hasCourse);
+        return new SuccessDataResult<GetByIdCourseDto>(courseMapping, ConstantsMessages.CourseGetByIdSuccessMessage);
     }
+
     public async Task<IResult> CreateAsync(CreateCourseDto entity)
     {
-        var createdCourse = new Course
+        if (entity == null)
         {
-            CourseName = entity.CourseName,
-            CreatedDate = entity.CreatedDate,
-            EndDate = entity.EndDate,
-            InstructorID = entity.InstructorID,
-            IsActive = entity.IsActive,
-            StartDate = entity.StartDate,
-        };
+            return new ErrorResult("Course data cannot be null.");
+        }
+
+        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate);
+        if (!validationResult.IsSuccess)
+        {
+            return validationResult;
+        }
+
+        var createdCourse = _mapper.Map<Course>(entity);
 
         await _unitOfWork.Courses.CreateAsync(createdCourse);
-
         var result = await _unitOfWork.CommitAsync();
 
         if (result > 0)
@@ -101,14 +79,23 @@ public class CourseManager : ICourseService
 
         return new ErrorResult(ConstantsMessages.CourseCreateFailedMessage);
     }
+
     public async Task<IResult> Remove(DeleteCourseDto entity)
     {
-        var deletedCourse = new Course
+        if (entity == null || string.IsNullOrEmpty(entity.Id))
         {
-            ID = entity.Id,
-        };
-        _unitOfWork.Courses.Remove(deletedCourse);
+            return new ErrorResult("Course data cannot be null.");
+        }
+
+        var courseToDelete = await _unitOfWork.Courses.GetByIdAsync(entity.Id);
+        if (courseToDelete == null)
+        {
+            return new ErrorResult(ConstantsMessages.CourseGetByIdFailedMessage);
+        }
+
+        _unitOfWork.Courses.Remove(courseToDelete);
         var result = await _unitOfWork.CommitAsync();
+
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.CourseDeleteSuccessMessage);
@@ -119,20 +106,28 @@ public class CourseManager : ICourseService
 
     public async Task<IResult> Update(UpdateCourseDto entity)
     {
-        var updatedCourse = await _unitOfWork.Courses.GetByIdAsync(entity.Id);
-        if (updatedCourse == null)
+        if (entity == null)
         {
-            return new ErrorResult(ConstantsMessages.CourseUpdateFailedMessage);
+            return new ErrorResult("Course data cannot be null.");
         }
 
-        updatedCourse.CourseName = entity.CourseName;
-        updatedCourse.StartDate = entity.StartDate;
-        updatedCourse.EndDate = entity.EndDate;
-        updatedCourse.InstructorID = entity.InstructorID;
-        updatedCourse.IsActive = entity.IsActive;
+        var validationResult = await ValidateCourse(entity.CourseName, entity.StartDate, entity.EndDate, entity.Id);
+        if (!validationResult.IsSuccess)
+        {
+            return validationResult;
+        }
+
+        var updatedCourse = await _unitOfWork.Courses.GetByIdAsync(entity.Id, true);
+        if (updatedCourse == null)
+        {
+            return new ErrorResult(ConstantsMessages.CourseGetByIdFailedMessage);
+        }
+
+        _mapper.Map(entity, updatedCourse);
 
         _unitOfWork.Courses.Update(updatedCourse);
         var result = await _unitOfWork.CommitAsync();
+
         if (result > 0)
         {
             return new SuccessResult(ConstantsMessages.CourseUpdateSuccessMessage);
@@ -142,97 +137,81 @@ public class CourseManager : ICourseService
 
     public async Task<IDataResult<IEnumerable<GetAllCourseDetailDto>>> GetAllCourseDetail(bool track = true)
     {
-        // ZOR: N+1 Problemi - Include kullanılmamış, lazy loading aktif
-        var courseListDetailList = await _unitOfWork.Courses.GetAllCourseDetail(false).ToListAsync();
-        
-        // ZOR: N+1 - Her course için Instructor ayrı sorgu ile çekiliyor (x.Instructor?.Name)
-        var courseDetailDtoList  = courseListDetailList.Select(x => new GetAllCourseDetailDto
-        {
-            CourseName = x.CourseName,
-            StartDate = x.StartDate,
-            EndDate = x.EndDate,
-            CreatedDate = x.CreatedDate,
-            Id = x.ID,
-            InstructorID = x.InstructorID,
-            InstructorName = x.Instructor?.Name ?? "",
-            IsActive = x.IsActive,
-            Lessons = x.Lessons.Select(l => new GetAllLessonDto
-            {
-                Id = l.ID,
-                Title = l.Title,
-                Date = l.Date,
-                Duration = l.Duration,
-                Content = l.Content,
-                CourseID = l.CourseID,
-                Time = l.Time
-            }).ToList()
-        });
+        var courseListDetailList = await _unitOfWork.Courses.GetAllCourseDetail(track).ToListAsync();
+        var courseDetailDtoList = _mapper.Map<IEnumerable<GetAllCourseDetailDto>>(courseListDetailList);
 
-        // ORTA DÜZELTME: Null ve empty kontrolü eklendi
         if (courseDetailDtoList == null || !courseDetailDtoList.Any())
         {
             return new ErrorDataResult<IEnumerable<GetAllCourseDetailDto>>(null, ConstantsMessages.CourseListFailedMessage);
         }
-        var firstDetail = courseDetailDtoList.First(); // Artık güvenli
 
         return new SuccessDataResult<IEnumerable<GetAllCourseDetailDto>>(courseDetailDtoList, ConstantsMessages.CourseDetailsFetchedSuccessfully);
     }
 
-    private IResult CourseNameIsNullOrEmpty(string courseName)
+    private async Task<IResult> ValidateCourse(string? courseName, DateTime startDate, DateTime endDate, string? id = null)
     {
-        if(courseName == null || courseName.Length == 0)
+        var nameCheck = CourseNameIsNullOrEmpty(courseName);
+        if (!nameCheck.IsSuccess) return nameCheck;
+
+        var lengthCheck = CourseNameLengthCheck(courseName);
+        if (!lengthCheck.IsSuccess) return lengthCheck;
+
+        var dateCheck = CheckCourseDates(startDate, endDate);
+        if (!dateCheck.IsSuccess) return dateCheck;
+
+        var uniqueCheck = await CourseNameUniqueCheck(courseName!, id);
+        if (!uniqueCheck.IsSuccess) return uniqueCheck;
+
+        return new SuccessResult();
+    }
+
+    private IResult CourseNameIsNullOrEmpty(string? courseName)
+    {
+        if (string.IsNullOrEmpty(courseName))
         {
-            return new ErrorResult("Kurs Adı Boş Olamaz");
+            return new ErrorResult("Course Name cannot be empty.");
         }
         return new SuccessResult();
     }
 
-    private async Task<IResult> CourseNameUniqeCheck(string id,string courseName)
+    private async Task<IResult> CourseNameUniqueCheck(string courseName, string? id = null)
     {
-        var courseNameCheck = await _unitOfWork.Courses.GetAll(false).AnyAsync(c => c.CourseName == courseName);
-        if(!courseNameCheck)
+        var query = _unitOfWork.Courses.GetAll(false);
+        bool courseNameExists;
+
+        if (id != null)
         {
-            return new ErrorResult("Bu kurs adi ile zaten bir kurs var");
+            // For updates, check if the name exists on a DIFFERENT course
+            courseNameExists = await query.AnyAsync(c => c.CourseName == courseName && c.ID != id);
+        }
+        else
+        {
+            // For creates, check if the name exists at all
+            courseNameExists = await query.AnyAsync(c => c.CourseName == courseName);
+        }
+        
+        if (courseNameExists)
+        {
+            return new ErrorResult("A course with this name already exists.");
         }
         return new SuccessResult();
     }
 
-    private  IResult CourseNameLenghtCehck(string courseName)
+    private IResult CourseNameLengthCheck(string? courseName)
     {
-        if(courseName == null || courseName.Length < 2 || courseName.Length > 50)
+        if (string.IsNullOrEmpty(courseName) || courseName.Length < 2 || courseName.Length > 50)
         {
-            return new ErrorResult("Kurs Adı Uzunluğu 2 - 50 Karakter Arasında Olmalı");
+            return new ErrorResult("Course Name must be between 2 and 50 characters.");
         }
         return new SuccessResult();
     }
 
-    private IResult IsValidDateFormat(string date)
-    {
-        DateTime tempDate;
-        bool isValid = DateTime.TryParse(date, out tempDate);
-
-        if (!isValid)
-        {
-            return new ErrorResult("Geçersiz tarih formatı.");
-        }
-        return new SuccessResult();
-    }
     private IResult CheckCourseDates(DateTime startDate, DateTime endDate)
     {
         if (endDate <= startDate)
         {
-            return new ErrorResult("Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.");
+            return new ErrorResult("End date must be after the start date.");
         }
-        return new SuccessResult();
-    }
-    
-    private IResult CheckInstructorNameIsNullOrEmpty(string instructorName)
-    {
-        if (string.IsNullOrEmpty(instructorName))
-        {
-            return new ErrorResult("Eğitmen alanı boş olamaz");
-        }
-
         return new SuccessResult();
     }
 }
